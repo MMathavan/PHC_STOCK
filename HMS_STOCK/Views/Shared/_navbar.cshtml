@@ -228,8 +228,19 @@
 {
     var tmpcusrid = Session["CUSRID"] != null ? Session["CUSRID"].ToString() : string.Empty;
     HMS_STOCK.Models.ApplicationDbContext db = new HMS_STOCK.Models.ApplicationDbContext();
-    var links = (from item in db.MenuRoleMasters.Where(x => x.Roles == tmpcusrid).OrderBy(x => x.MenuGId).OrderBy(x => x.MenuGIndex).ToList()
-                 select item).ToList();
+    // Use raw SQL to avoid Invalid column name errors for MenuId and ImageClassName
+    var sqlLinks = @"SELECT 
+        0 AS MenuId,
+        LinkText,
+        ActionName,
+        ControllerName,
+        Roles,
+        ISNULL(MenuGId, 0) AS MenuGId,
+        ISNULL(MenuGIndex, 0) AS MenuGIndex,
+        '' AS ImageClassName
+    FROM MenuRoleMaster 
+    WHERE Roles = @p0";
+    var links = db.Database.SqlQuery<HMS_STOCK.Models.MenuRoleMaster>(sqlLinks, tmpcusrid).ToList();
 
     <nav class="navbar navbar-expand-lg @(isAdmin ? "navbar-dark bg-primary" : "navbar-light bg-light")">
         <div class="container-fluid">
