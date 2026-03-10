@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.AspNet.Identity;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Collections.Generic;
 
 namespace HMS_STOCK.Models
@@ -29,12 +30,15 @@ namespace HMS_STOCK.Models
         public string Description { get; set; }
         public int SDPTID { get; set; }
 
-        // New properties
+        // Properties mapped to database columns
         public string RMenuType { get; set; }
         public string RControllerName { get; set; }
         public string RMenuIndex { get; set; }
         public short? RMenuGroupId { get; set; }
         public short? RMenuGroupOrder { get; set; }
+        
+        // NotMapped - column does not exist in database
+        [NotMapped]
         public string RImageClassName { get; set; }
     }
 }
