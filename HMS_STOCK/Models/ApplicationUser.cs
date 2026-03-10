@@ -33,7 +33,7 @@ namespace HMS_STOCK.Models
         [Required]
         [DataType(DataType.Date)]
         [Display(Name = "Date of Birth")]
-        public DateTime DOB { get; set; }
+        public DateTime? DOB { get; set; }
 
         [Required]
         [StringLength(10)]

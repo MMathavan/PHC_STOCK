@@ -192,7 +192,7 @@ namespace HMS_STOCK.Models
             [Required]
             [Display(Name = "Date of Birth")]
             [DataType(DataType.Date)]
-            public DateTime DOB { get; set; }
+            public DateTime? DOB { get; set; }
 
             [Required]
             [Display(Name = "Gender")]

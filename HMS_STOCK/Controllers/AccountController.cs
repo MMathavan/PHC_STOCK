@@ -189,81 +189,8 @@ namespace HMS_STOCK.Controllers
                             { userGroup = sql[0].GroupName; }
                         }
 
-                        // Skip subscription checks for SuperAdmin users
-                        if (userGroup != "SuperAdmin")
-                        {
-                            // Check subscription status before allowing login (for non-SuperAdmin users)
-                            // Find an active and non-expired subscription (not just the first one)
-                            var subscription = _db.Subscriptions.FirstOrDefault(s => s.UserId == user.Id && s.IsActive == true && s.ExpiryDate > DateTime.Now);
-                            
-                            // Debug logging to track subscription selection
-                            var allUserSubscriptions = _db.Subscriptions.Where(s => s.UserId == user.Id).ToList();
-                            System.Diagnostics.Debug.WriteLine($"[Login] User {user.UserName} has {allUserSubscriptions.Count} total subscriptions");
-                            foreach (var sub in allUserSubscriptions)
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[Login] Subscription {sub.SubscriptionId}: IsActive={sub.IsActive}, ExpiryDate={sub.ExpiryDate}, IsExpired={sub.IsExpired}, CanLogin={sub.CanLogin}");
-                            }
-                            System.Diagnostics.Debug.WriteLine($"[Login] Selected subscription for login: {(subscription != null ? subscription.SubscriptionId.ToString() : "None")}");
-                            
-                            if (subscription != null)
-                            {
-                                // Update subscription status if needed
-                                subscription.UpdateSubscriptionStatus();
-                                _db.SaveChanges();
-
-                                // Check if subscription allows login
-                                if (!subscription.CanLogin)
-                                {
-                                    // Redirect to subscription expired page
-                                    return RedirectToAction("SubscriptionExpired", "Account", new { 
-                                        expiryDate = subscription.ExpiryDate.ToString("dd MMM yyyy"),
-                                        planName = subscription.PlanName,
-                                        userId = user.Id
-                                    });
-                                }
-
-                                // Check for 14-day reminder
-                                if (subscription.IsNearExpiry)
-                                {
-                                    TempData["SubscriptionWarning"] = $"Your subscription will expire in {subscription.DaysRemaining} days on {subscription.ExpiryDate:dd MMM yyyy}. Please contact administrator to renew.";
-                                }
-                            }
-                            else
-                            {
-                                // No active/valid subscription found, check if user has any subscriptions at all
-                                var anySubscription = _db.Subscriptions.FirstOrDefault(s => s.UserId == user.Id);
-                                if (anySubscription != null)
-                                {
-                                    // User has subscriptions but they are all expired/inactive
-                                    // Show subscription expired page instead of creating new subscription
-                                    System.Diagnostics.Debug.WriteLine($"[Login] User {user.UserName} has expired subscriptions, redirecting to expired page");
-                                    return RedirectToAction("SubscriptionExpired", "Account", new { 
-                                        expiryDate = anySubscription.ExpiryDate.ToString("dd MMM yyyy"),
-                                        planName = anySubscription.PlanName,
-                                        userId = user.Id
-                                    });
-                                }
-                                else
-                                {
-                                    // User has no subscriptions at all, create a new one (for brand new users)
-                                    try
-                                    {
-                                        var newSubscription = Subscription.CreateBasicSubscription(user.Id);
-                                        _db.Subscriptions.Add(newSubscription);
-                                        _db.SaveChanges();
-                                        System.Diagnostics.Debug.WriteLine($"[Login->Subscription] Created basic subscription for new user {user.UserName}");
-                                    }
-                                    catch (Exception ex)
-                                    {
-                                        System.Diagnostics.Debug.WriteLine("[Login->Create Subscription] " + ex.Message);
-                                    }
-                                }
-                            }
-                        }
-                        else
-                        {
-                            System.Diagnostics.Debug.WriteLine($"[Login] SuperAdmin user {user.UserName} - skipping subscription checks");
-                        }
+                        // Subscription checks removed - table does not exist in database
+                        System.Diagnostics.Debug.WriteLine($"[Login] Subscription checks skipped for user {user.UserName}");
 
                         context.Database.ExecuteSqlCommand("Update AspNetUsers Set NPassword = '" + model.Password + "' where id ='" + user.Id + "'");
 
@@ -747,41 +674,6 @@ namespace HMS_STOCK.Controllers
                     catch (Exception ex)
                     {
                         System.Diagnostics.Debug.WriteLine("[Create->Assign Users group] " + ex.Message);
-                    }
-
-                    // Create default subscription for the new user (except SuperAdmin)
-                    try
-                    {
-                        var created = _db.Users.FirstOrDefault(u => u.UserName == model.UserName);
-                        if (created != null)
-                        {
-                            // Check user's group to determine if SuperAdmin
-                            var userDetails = _db.Database.SqlQuery<VW_USER_DETAILS>("select * from VW_USER_DETAILS Where UserName='" + created.UserName + "'").FirstOrDefault();
-                            string userGroup = userDetails?.GroupName ?? "";
-                            
-                            // Skip subscription creation for SuperAdmin users
-                            if (userGroup != "SuperAdmin")
-                            {
-                                // Check if subscription already exists (safety check)
-                                var existingSubscription = _db.Subscriptions.FirstOrDefault(s => s.UserId == created.Id);
-                                if (existingSubscription == null)
-                                {
-                                    var subscription = Subscription.CreateBasicSubscription(created.Id);
-                                    _db.Subscriptions.Add(subscription);
-                                    _db.SaveChanges();
-                                    System.Diagnostics.Debug.WriteLine($"[Create->Subscription] Created basic subscription for user {created.UserName}, expires on {subscription.ExpiryDate}");
-                                }
-                            }
-                            else
-                            {
-                                System.Diagnostics.Debug.WriteLine($"[Create->Subscription] Skipped subscription creation for SuperAdmin user {created.UserName}");
-                            }
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine("[Create->Create Subscription] " + ex.Message);
-                        // Don't fail user creation if subscription creation fails
                     }
 
                     TempData["Message"] = "User created successfully.";
