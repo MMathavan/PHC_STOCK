@@ -142,58 +142,6 @@
                     </div>
                 </div>
 
-                <!-- New Fields Section -->
-                <div class="row mb-4">
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold d-block mb-2">Mobile Number</label>
-                        @Html.TextBoxFor(m => m.MobileNo, new
-                        {
-                            @class = "form-control",
-                            required = "required",
-                            placeholder = "Enter mobile number",
-                            data_val = "true",
-                            data_val_required = "Mobile number is required.",
-                            data_val_length = "Mobile number must be 10 digits.",
-                            data_val_length_min = "10",
-                            data_val_length_max = "10",
-                            data_val_regex = "Please enter a valid mobile number.",
-                            data_val_regex_pattern = "^[0-9]{10}$"
-                        })
-                        <span class="text-danger small field-validation-error" data-valmsg-for="MobileNo" data-valmsg-replace="true">
-                            @Html.ValidationMessageFor(m => m.MobileNo)
-                        </span>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold d-block mb-2">Date of Birth</label>
-                        @Html.TextBoxFor(m => m.DOB, "{0:yyyy-MM-dd}", new
-                        {
-                            @class = "form-control",
-                            type = "date",
-                            max = DateTime.Now.AddDays(-1).ToString("yyyy-MM-dd"),
-                            required = "required",
-                            data_val = "true",
-                            data_val_required = "Date of birth is required.",
-                            data_val_date = "Please enter a valid date."
-                        })
-                        <span class="text-danger small field-validation-error" data-valmsg-for="DOB" data-valmsg-replace="true">
-                            @Html.ValidationMessageFor(m => m.DOB)
-                        </span>
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label class="form-label fw-bold d-block mb-2">Gender</label>
-                        @Html.DropDownListFor(m => m.Gender, new SelectList(new List<string> { "Male", "Female" }), "Select Gender", new
-                        {
-                            @class = "form-select",
-                            required = "required",
-                            data_val = "true",
-                            data_val_required = "Gender is required."
-                        })
-                        <span class="text-danger small field-validation-error" data-valmsg-for="Gender" data-valmsg-replace="true">
-                            @Html.ValidationMessageFor(m => m.Gender)
-                        </span>
-                    </div>
-                </div>
-
                 <input type="hidden" name="viewType" value="standard" />
 
                 <!-- Buttons -->
@@ -240,27 +188,6 @@
 @section Scripts {
     <script>
         $(document).ready(function () {
-            // Immediate DOB validation: must be earlier than today
-            (function () {
-                var $dob = $('#DOB');
-                function validateDob() {
-                    var v = $dob.val();
-                    if (!v) { $dob[0].setCustomValidity(''); return; }
-                    var dob = new Date(v + 'T00:00:00');
-                    var today = new Date();
-                    today.setHours(0, 0, 0, 0);
-                    if (dob >= today) {
-                        $dob[0].setCustomValidity('Date of Birth must be earlier than today.');
-                    } else {
-                        $dob[0].setCustomValidity('');
-                    }
-                    if (typeof $dob[0].reportValidity === 'function') {
-                        $dob[0].reportValidity();
-                    }
-                }
-                $dob.on('change input blur', validateDob);
-                validateDob();
-            })();
             // Bootstrap validation
             (function () {
                 'use strict'

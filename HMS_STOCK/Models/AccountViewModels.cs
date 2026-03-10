@@ -90,22 +90,6 @@ namespace HMS_STOCK.Models
 
             public string NPassword { get; set; }
 
-            [Required]
-            [Display(Name = "Mobile Number")]
-            [StringLength(10, MinimumLength = 10, ErrorMessage = "Mobile number must be 10 digits")]
-            [RegularExpression(@"^[0-9]+$", ErrorMessage = "Only numbers are allowed")]
-            public string MobileNo { get; set; }
-
-            [Required]
-            [Display(Name = "Date of Birth")]
-            [DataType(DataType.Date)]
-            public DateTime DOB { get; set; }
-
-            [Required(ErrorMessage = "Gender is required")]
-            [StringLength(10, ErrorMessage = "Gender must be up to 10 characters")]
-            [Display(Name = "Gender")]
-            public string Gender { get; set; }  // Can be replaced with enum (e.g., "Male", "Female", "Other")
-
             // Government proof upload
             [Display(Name = "Government Proof (PDF/Image)")]
             public HttpPostedFileBase GovernmentProofFile { get; set; }
@@ -124,27 +108,15 @@ namespace HMS_STOCK.Models
                     LastName = this.LastName,
                     Email = this.Email,
                     NPassword = this.NPassword,
-                    MobileNo = this.MobileNo,   // New field
-                    DOB = this.DOB,              // New field
-                    Gender = this.Gender,        // New field
-                    GovernmentProofPath = this.GovernmentProofPath,
-                    // Provide safe defaults to satisfy non-null DB columns (if present)
-                    CateTid = 0,
-                    MemberID = 0
+                    GovernmentProofPath = this.GovernmentProofPath
                 };
                 return user;
             }
 
-            // Server-side validation to ensure DOB is strictly earlier than today
+            // Return empty validation result (no custom validation needed)
             public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
             {
-                if (DOB >= DateTime.Today)
-                {
-                    yield return new ValidationResult(
-                        "Date of Birth must be earlier than today.",
-                        new[] { nameof(DOB) }
-                    );
-                }
+                return Enumerable.Empty<ValidationResult>();
             }
         }
 
@@ -161,10 +133,6 @@ namespace HMS_STOCK.Models
                 this.LastName = user.LastName;
                 this.Email = user.Email;
                 this.NPassword = user.NPassword;
-                this.MobileNo = user.MobileNo;    
-                this.DOB = user.DOB;             
-                this.Gender = user.Gender;        
-
             }
 
             [Required]
@@ -183,21 +151,6 @@ namespace HMS_STOCK.Models
             [EmailAddress(ErrorMessage = "Invalid Email Address")]
             public string Email { get; set; }
 
-            [Required]
-            [Display(Name = "Mobile Number")]
-            [StringLength(10, MinimumLength = 10, ErrorMessage = "Mobile number must be exactly 10 digits")]
-            [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Mobile number must be exactly 10 digits")] 
-            public string MobileNo { get; set; }
-
-            [Required]
-            [Display(Name = "Date of Birth")]
-            [DataType(DataType.Date)]
-            public DateTime? DOB { get; set; }
-
-            [Required]
-            [Display(Name = "Gender")]
-            public string Gender { get; set; }
-    
             public string NPassword { get; set; }
 
         }

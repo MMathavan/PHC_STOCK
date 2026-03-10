@@ -741,9 +741,6 @@ namespace HMS_STOCK.Controllers
                 user.FirstName = model.FirstName;
                 user.LastName = model.LastName;
                 user.Email = model.Email;
-                user.MobileNo = model.MobileNo;
-                user.DOB = model.DOB;
-                user.Gender = model.Gender;
                 _db.SaveChanges();
                 TempData["Message"] = "User updated successfully.";
                 return RedirectToAction("Index");

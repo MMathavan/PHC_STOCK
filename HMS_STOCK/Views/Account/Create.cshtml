@@ -35,21 +35,6 @@
                         @Html.ValidationMessageFor(m => m.Email, null, new { @class = "text-danger" })
                     </div>
                     <div class="col-md-4">
-                        @Html.LabelFor(m => m.MobileNo)
-                        @Html.TextBoxFor(m => m.MobileNo, new { @class = "form-control" })
-                        @Html.ValidationMessageFor(m => m.MobileNo, null, new { @class = "text-danger" })
-                    </div>
-                    <div class="col-md-4">
-                        @Html.LabelFor(m => m.Gender)
-                        @Html.DropDownListFor(m => m.Gender, new SelectList(new List<string> { "Male", "Female", "Other" }), "Select Gender", new { @class = "form-select" })
-                        @Html.ValidationMessageFor(m => m.Gender, null, new { @class = "text-danger" })
-                    </div>
-                    <div class="col-md-4">
-                        @Html.LabelFor(m => m.DOB)
-                        @Html.TextBoxFor(m => m.DOB, "{0:yyyy-MM-dd}", new { @type = "date", @class = "form-control" })
-                        @Html.ValidationMessageFor(m => m.DOB, null, new { @class = "text-danger" })
-                    </div>
-                    <div class="col-md-4">
                         @Html.LabelFor(m => m.Password)
                         @Html.PasswordFor(m => m.Password, new { @class = "form-control" })
                         @Html.ValidationMessageFor(m => m.Password, null, new { @class = "text-danger" })

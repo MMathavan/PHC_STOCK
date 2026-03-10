@@ -76,14 +76,10 @@ namespace HMS_STOCK.Models
 
             table.Property((ApplicationUser u) => u.UserName).IsRequired();
             
-            // Map the CateTid property to the database column
-            table.Property((ApplicationUser u) => u.CateTid).HasColumnName("CateTid");
-
             // EF won't let us swap out IdentityUserRole for ApplicationUserRole here:
             modelBuilder.Entity<ApplicationUser>().HasMany<IdentityUserRole>((ApplicationUser u) => u.Roles);
             modelBuilder.Entity<IdentityUserRole>().HasKey((IdentityUserRole r) =>
                 new { UserId = r.UserId, RoleId = r.RoleId }).ToTable("AspNetUserRoles");
-
 
             // Add the group stuff here:
             modelBuilder.Entity<ApplicationUser>().HasMany<ApplicationUserGroup>((ApplicationUser u) => u.Groups);
