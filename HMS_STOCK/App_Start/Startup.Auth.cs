@@ -17,6 +17,12 @@ namespace HMS_STOCK
             {
                 AuthenticationType = DefaultAuthenticationTypes.ApplicationCookie,
                 LoginPath = new PathString("/Account/Login"),
+                CookieName = ".AspNet.ApplicationCookie",
+                CookieHttpOnly = true,
+                CookieSecure = CookieSecureOption.SameAsRequest,
+                CookiePath = "/",
+                ExpireTimeSpan = TimeSpan.FromDays(1),
+                SlidingExpiration = true,
             });
         }
     }

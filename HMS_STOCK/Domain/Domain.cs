@@ -29,8 +29,20 @@ namespace HMS_STOCK
                 return amenu.ToList();
             }
 
-            //var query = context.Database.SqlQuery<MenuRoleMaster>("selecgit statust * from MenuRoleMaster where Roles='admin'");
-            var query = context.Database.SqlQuery<MenuRoleMaster>("select * from MenuRoleMaster where Roles='" + cusrid + "'");
+            // Schema-tolerant query: select only columns that exist in database
+            var sqlMenu = $@"SELECT 
+                0 AS MenuId,
+                LinkText,
+                ActionName,
+                ControllerName,
+                Roles,
+                ISNULL(MenuGId, 0) AS MenuGId,
+                ISNULL(MenuGIndex, 0) AS MenuGIndex,
+                '' AS ImageClassName
+            FROM MenuRoleMaster 
+            WHERE Roles = @p0";
+            
+            var query = context.Database.SqlQuery<MenuRoleMaster>(sqlMenu, cusrid);
             
             // Get current user to check role claims
             var user = http != null ? http.User : null;
@@ -139,8 +151,8 @@ namespace HMS_STOCK
                                            LinkText  = data.LinkText,
                                            ActionName = data.ActionName,
                                            ControllerName = data.ControllerName,
-                                           username = cusrid,// "admin",
-                                           imageClass = data.ImageClassName, estatus = true });
+                                           username = cusrid,
+                                           imageClass = "", estatus = true });
             }
 
             return amenu.ToList();
