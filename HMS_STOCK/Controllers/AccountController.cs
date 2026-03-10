@@ -367,6 +367,7 @@ namespace HMS_STOCK.Controllers
                         Session["PreviousLoginTime"] = prevLogin;
 
                         await SignInAsync(user, model.RememberMe);
+                        System.Diagnostics.Debug.WriteLine("[Login] SignInAsync completed for user: " + user.UserName);
 
                         // Store current login time
                         var now = DateTime.Now;

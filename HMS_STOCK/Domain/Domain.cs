@@ -14,6 +14,27 @@ namespace HMS_STOCK
         private readonly ApplicationDbContext context = new ApplicationDbContext();
         public IEnumerable<MenuNavbar> navbarItems()
         {
+            // DEBUG: Check incoming request details
+            var httpDebug = System.Web.HttpContext.Current;
+            if (httpDebug != null)
+            {
+                var authCookie = httpDebug.Request.Cookies[".AspNet.ApplicationCookie"];
+                System.Diagnostics.Debug.WriteLine($"[MenuDebug] Cookie present: {authCookie != null}");
+                if (authCookie != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MenuDebug] Cookie value length: {authCookie.Value?.Length ?? 0}");
+                    System.Diagnostics.Debug.WriteLine($"[MenuDebug] Cookie path: {authCookie.Path}");
+                }
+                
+                var userDebug = httpDebug.User;
+                System.Diagnostics.Debug.WriteLine($"[MenuDebug] User null: {userDebug == null}");
+                if (userDebug?.Identity != null)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[MenuDebug] IsAuthenticated: {userDebug.Identity.IsAuthenticated}");
+                    System.Diagnostics.Debug.WriteLine($"[MenuDebug] UserName: {userDebug.Identity.Name}");
+                }
+            }
+            
             //" + Session["CUSRID"] + "
             //var uname = HttpSessionStateBase["CUSRID"].ToString();
             var amenu = new List<MenuNavbar>();

@@ -19,7 +19,7 @@ namespace HMS_STOCK
                 LoginPath = new PathString("/Account/Login"),
                 CookieName = ".AspNet.ApplicationCookie",
                 CookieHttpOnly = true,
-                CookieSecure = CookieSecureOption.SameAsRequest,
+                CookieSecure = CookieSecureOption.Never,
                 CookiePath = "/",
                 ExpireTimeSpan = TimeSpan.FromDays(1),
                 SlidingExpiration = true,
