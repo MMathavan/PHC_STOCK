@@ -316,6 +316,7 @@
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\VW_ACCOUNTING_YEAR_DETAIL_ASSGN.cs" />
     <Compile Include="Models\StockMaster_2526.cs" />
+    <Compile Include="Models\MaterialGroupMaster.cs" />
     <!-- Excluded per cleanup: GovernmentProof model removed -->
     <!-- <Compile Include="Models\GovernmentProof.cs" /> -->
     <Compile Include="Properties\AssemblyInfo.cs" />

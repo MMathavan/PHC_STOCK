@@ -15,9 +15,29 @@ namespace HMS_STOCK.Controllers
         private ApplicationDbContext db = new ApplicationDbContext();
 
         // GET: ClosingStock
-        public ActionResult Index()
+        public ActionResult Index(int? materialGroupId)
         {
-            var stockData = db.Database.SqlQuery<StockMaster_2526>("SELECT * FROM StockMaster_2526").ToList();
+            // Get Material Groups for dropdown
+            var materialGroups = db.Database.SqlQuery<MaterialGroupMaster>(
+                "SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER ORDER BY MTRLGDESC")
+                .ToList();
+
+            ViewBag.MaterialGroups = new SelectList(materialGroups, "MTRLGID", "MTRLGDESC", materialGroupId);
+            ViewBag.SelectedMaterialGroup = materialGroupId;
+
+            // Get Stock Data with optional filter
+            List<StockMaster_2526> stockData;
+            if (materialGroupId.HasValue)
+            {
+                stockData = db.Database.SqlQuery<StockMaster_2526>(
+                    "SELECT * FROM StockMaster_2526 WHERE MTRLGID = @p0", materialGroupId.Value)
+                    .ToList();
+            }
+            else
+            {
+                stockData = db.Database.SqlQuery<StockMaster_2526>("SELECT * FROM StockMaster_2526").ToList();
+            }
+
             return View(stockData);
         }
 
