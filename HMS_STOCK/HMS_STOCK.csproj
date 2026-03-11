@@ -193,6 +193,7 @@
     <Compile Include="Controllers\ErrorController.cs" />
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ComingSoonController.cs" />
+    <Compile Include="Controllers\ClosingStockController.cs" />
     <Compile Include="Controllers\Masters\CommonController.cs" />
     <Compile Include="Controllers\Masters\CompanyMasterController.cs" />
     <!-- Excluded per cleanup (content modules) -->
@@ -314,6 +315,7 @@
     <Compile Include="Models\TMPRPT_IDS.cs" />
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\VW_ACCOUNTING_YEAR_DETAIL_ASSGN.cs" />
+    <Compile Include="Models\StockMaster_2526.cs" />
     <!-- Excluded per cleanup: GovernmentProof model removed -->
     <!-- <Compile Include="Models\GovernmentProof.cs" /> -->
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -1230,6 +1232,7 @@
     <Content Include="Views\PublicationBillReports\Index.cshtml" />
     <Content Include="Views\Estimate\Index.cshtml" />
     <Content Include="Views\Estimate\Form.cshtml" />
+    <Content Include="Views\ClosingStock\Index.cshtml" />
     <Content Include="Views\StockView\Index.cshtml" />
     <Content Include="Views\StockViewReport\Index.cshtml" />
     <Content Include="Views\Reports\RawMaterialsImport.cshtml" />
