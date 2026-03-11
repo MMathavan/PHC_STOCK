@@ -107,7 +107,17 @@ namespace HMS_STOCK.Controllers
                     .ToList();
             }
 
-            byte[] pdfBytes = BuildManualEntryPdf(materialGroupName, DateTime.Now, data);
+            string reportTitle = materialGroupName;
+            if (isTabletsGroup)
+            {
+                reportTitle = materialGroupName.Trim();
+                if (alphaFrom != null && alphaTo != null)
+                {
+                    reportTitle = string.Format("{0} from {1} to {2}", materialGroupName.Trim(), alphaFrom, alphaTo);
+                }
+            }
+
+            byte[] pdfBytes = BuildManualEntryPdf(reportTitle, DateTime.Now, data);
 
             string fileTitle = materialGroupName;
             if (isTabletsGroup && alphaFrom != null && alphaTo != null)
