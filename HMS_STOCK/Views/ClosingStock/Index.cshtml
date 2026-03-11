@@ -448,49 +448,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @if (Model != null && Model.Any())
-                    {
-                        foreach (var item in Model)
-                        {
-                            <tr>
-                                <td>@item.STKBID</td>
-                                <td>@item.TRANREFID</td>
-                                <td><span class="badge badge-info">@item.TRANREFNAME</span></td>
-                                <td>@item.TRANDREFGID</td>
-                                <td>@item.MTRLGID</td>
-                                <td>@item.TRANDREFID</td>
-                                <td>@item.MTRLGDESC</td>
-                                <td>@item.MTRLDESC</td>
-                                <td>@item.DACHEADID</td>
-                                <td>@item.PACKMID</td>
-                                <td><span class="badge badge-warning">@item.BATCHNO</span></td>
-                                <td>@item.STKEDATE.ToString("dd-MM-yyyy")</td>
-                                <td><strong>@item.MTRLSTKQTY</strong></td>
-                                <td>₹@item.STKPRATE.ToString("N2")</td>
-                                <td><span class="badge badge-success">₹@item.STKMRP.ToString("N2")</span></td>
-                                <td>₹@item.ASTKSRATE.ToString("N2")</td>
-                                <td>@item.HSNID</td>
-                                <td>@item.TRANBCGSTEXPRN.ToString("N2")</td>
-                                <td>@item.TRANBSGSTEXPRN.ToString("N2")</td>
-                                <td>@item.TRANBIGSTEXPRN.ToString("N2")</td>
-                                <td>@item.TRANBCGSTAMT.ToString("N2")</td>
-                                <td>@item.TRANBSGSTAMT.ToString("N2")</td>
-                                <td>@item.TRANBIGSTAMT.ToString("N2")</td>
-                                <td><strong style="color: #667eea;">₹@(item.CLVALUE != null ? item.CLVALUE.Value.ToString("N2") : "0.00")</strong></td>
-                            </tr>
-                        }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="24" class="text-center">
-                                <div style="padding: 40px;">
-                                    <i class="fa fa-inbox fa-3x text-muted"></i>
-                                    <p class="mt-3 text-muted">No stock records found</p>
-                                </div>
-                            </td>
-                        </tr>
-                    }
                 </tbody>
             </table>
             </div>
@@ -504,6 +461,8 @@
     
     <script>
         $(document).ready(function () {
+            var selectedMaterialGroup = '@(ViewBag.SelectedMaterialGroup ?? "")';
+
             // Initialize Select2 on Material Group dropdown with search functionality
             $('#materialGroupDropdown').select2({
                 placeholder: '-- Search & Select Material Group --',
@@ -516,16 +475,100 @@
                 $(this).closest('form').submit();
             });
 
-            $('#stockTable').DataTable({
+            // DataTables Server-Side Processing
+            var table = $('#stockTable').DataTable({
                 responsive: true,
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 order: [[0, 'desc']],
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '@Url.Action("GetStockData", "ClosingStock")',
+                    type: 'POST',
+                    data: function(d) {
+                        d.MaterialGroupId = selectedMaterialGroup ? parseInt(selectedMaterialGroup) : null;
+                        console.log('DataTables Request:', d);
+                        return d;
+                    },
+                    error: function(xhr, error, thrown) {
+                        console.error('DataTables AJAX Error:', error, thrown);
+                        console.error('Response:', xhr.responseText);
+                        alert('Error loading data: ' + thrown);
+                    }
+                },
+                columns: [
+                    { data: 'STKBID' },
+                    { data: 'TRANREFID' },
+                    { 
+                        data: 'TRANREFNAME',
+                        render: function(data) {
+                            return '<span class="badge badge-info">' + data + '</span>';
+                        }
+                    },
+                    { data: 'TRANDREFGID' },
+                    { data: 'MTRLGID' },
+                    { data: 'TRANDREFID' },
+                    { data: 'MTRLGDESC' },
+                    { data: 'MTRLDESC' },
+                    { data: 'DACHEADID' },
+                    { data: 'PACKMID' },
+                    { 
+                        data: 'BATCHNO',
+                        render: function(data) {
+                            return '<span class="badge badge-warning">' + data + '</span>';
+                        }
+                    },
+                    { 
+                        data: 'STKEDATE',
+                        render: function(data) {
+                            return data ? new Date(data).toLocaleDateString('en-GB') : '';
+                        }
+                    },
+                    { 
+                        data: 'MTRLSTKQTY',
+                        render: function(data) {
+                            return '<strong>' + data + '</strong>';
+                        }
+                    },
+                    { 
+                        data: 'STKPRATE',
+                        render: function(data) {
+                            return '₹' + parseFloat(data).toFixed(2);
+                        }
+                    },
+                    { 
+                        data: 'STKMRP',
+                        render: function(data) {
+                            return '<span class="badge badge-success">₹' + parseFloat(data).toFixed(2) + '</span>';
+                        }
+                    },
+                    { 
+                        data: 'ASTKSRATE',
+                        render: function(data) {
+                            return '₹' + parseFloat(data).toFixed(2);
+                        }
+                    },
+                    { data: 'HSNID' },
+                    { data: 'TRANBCGSTEXPRN' },
+                    { data: 'TRANBSGSTEXPRN' },
+                    { data: 'TRANBIGSTEXPRN' },
+                    { data: 'TRANBCGSTAMT' },
+                    { data: 'TRANBSGSTAMT' },
+                    { data: 'TRANBIGSTAMT' },
+                    { 
+                        data: 'CLVALUE',
+                        render: function(data) {
+                            return '<strong style="color: #667eea;">₹' + (data ? parseFloat(data).toFixed(2) : '0.00') + '</strong>';
+                        }
+                    }
+                ],
                 dom: '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
                 language: {
                     search: "Search records:",
                     emptyTable: "No stock records available",
-                    zeroRecords: "No matching records found"
+                    zeroRecords: "No matching records found",
+                    processing: "<i class='fa fa-spinner fa-spin'></i> Loading..."
                 },
                 columnDefs: [
                     { targets: [12, 13, 14, 15, 18, 19, 20, 21, 22, 23], className: 'text-right' }

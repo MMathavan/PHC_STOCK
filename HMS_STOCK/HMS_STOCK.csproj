@@ -317,6 +317,7 @@
     <Compile Include="Models\VW_ACCOUNTING_YEAR_DETAIL_ASSGN.cs" />
     <Compile Include="Models\StockMaster_2526.cs" />
     <Compile Include="Models\MaterialGroupMaster.cs" />
+    <Compile Include="Models\DataTableModels.cs" />
     <!-- Excluded per cleanup: GovernmentProof model removed -->
     <!-- <Compile Include="Models\GovernmentProof.cs" /> -->
     <Compile Include="Properties\AssemblyInfo.cs" />
