@@ -17,9 +17,9 @@ namespace HMS_STOCK.Controllers
         // GET: ClosingStock
         public ActionResult Index(int? materialGroupId)
         {
-            // Get Material Groups for dropdown
+            // Get Material Groups for dropdown (only MTRLTID=2 and DISPSTATUS=0)
             var materialGroups = db.Database.SqlQuery<MaterialGroupMaster>(
-                "SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER ORDER BY MTRLGDESC")
+                "SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER WHERE MTRLTID = 2 AND DISPSTATUS = 0 ORDER BY MTRLGDESC")
                 .ToList();
 
             ViewBag.MaterialGroups = new SelectList(materialGroups, "MTRLGID", "MTRLGDESC", materialGroupId);
