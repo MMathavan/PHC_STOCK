@@ -22,8 +22,33 @@ namespace HMS_STOCK.Controllers
                 "SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER WHERE MTRLTID = 2 AND DISPSTATUS = 0 ORDER BY MTRLGDESC")
                 .ToList();
 
+            // Calculate totals based on filter
+            decimal totalQty = 0;
+            decimal totalValue = 0;
+            
+            if (materialGroupId.HasValue && materialGroupId.Value > 0)
+            {
+                totalQty = db.Database.SqlQuery<decimal>(
+                    "SELECT ISNULL(SUM(MTRLSTKQTY), 0) FROM StockMaster_2526 WHERE MTRLGID = @p0", 
+                    materialGroupId.Value).FirstOrDefault();
+                    
+                totalValue = db.Database.SqlQuery<decimal>(
+                    "SELECT ISNULL(SUM(CLVALUE), 0) FROM StockMaster_2526 WHERE MTRLGID = @p0", 
+                    materialGroupId.Value).FirstOrDefault();
+            }
+            else
+            {
+                totalQty = db.Database.SqlQuery<decimal>(
+                    "SELECT ISNULL(SUM(MTRLSTKQTY), 0) FROM StockMaster_2526").FirstOrDefault();
+                    
+                totalValue = db.Database.SqlQuery<decimal>(
+                    "SELECT ISNULL(SUM(CLVALUE), 0) FROM StockMaster_2526").FirstOrDefault();
+            }
+
             ViewBag.MaterialGroups = new SelectList(materialGroups, "MTRLGID", "MTRLGDESC", materialGroupId);
             ViewBag.SelectedMaterialGroup = materialGroupId;
+            ViewBag.TotalQuantity = totalQty;
+            ViewBag.TotalValue = totalValue;
 
             return View(new List<StockMaster_2526>());
         }
