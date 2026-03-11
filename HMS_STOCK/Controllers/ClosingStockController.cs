@@ -105,12 +105,41 @@ namespace HMS_STOCK.Controllers
                         startRowNum, endRowNum).ToList();
                 }
 
+                // Convert data to anonymous objects with formatted dates to avoid /Date()/ serialization
+                var formattedData = stockData.Select(item => new
+                {
+                    item.STKBID,
+                    item.TRANREFID,
+                    item.TRANREFNAME,
+                    item.TRANDREFGID,
+                    item.MTRLGID,
+                    item.TRANDREFID,
+                    item.MTRLGDESC,
+                    item.MTRLDESC,
+                    item.DACHEADID,
+                    item.PACKMID,
+                    item.BATCHNO,
+                    STKEDATE = item.STKEDATE.ToString("yyyy-MM-dd"),
+                    item.MTRLSTKQTY,
+                    item.STKPRATE,
+                    item.STKMRP,
+                    item.ASTKSRATE,
+                    item.HSNID,
+                    item.TRANBCGSTEXPRN,
+                    item.TRANBSGSTEXPRN,
+                    item.TRANBIGSTEXPRN,
+                    item.TRANBCGSTAMT,
+                    item.TRANBSGSTAMT,
+                    item.TRANBIGSTAMT,
+                    item.CLVALUE
+                }).ToList();
+
                 return Json(new
                 {
                     draw = request.Draw,
                     recordsTotal = totalCount,
                     recordsFiltered = filteredCount,
-                    data = stockData,
+                    data = formattedData,
                     error = (string)null
                 }, JsonRequestBehavior.AllowGet);
             }

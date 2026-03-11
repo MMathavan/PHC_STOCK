@@ -522,7 +522,9 @@
                     { 
                         data: 'STKEDATE',
                         render: function(data) {
-                            return data ? new Date(data).toLocaleDateString('en-GB') : '';
+                            if (!data) return '';
+                            // Data comes as "2027-09-01" format from server
+                            return data;
                         }
                     },
                     { 
