@@ -74,6 +74,14 @@
     <Reference Include="ExcelNumberFormat, Version=1.1.0.0, Culture=neutral, PublicKeyToken=23c6f5d73be07eca, processorArchitecture=MSIL">
       <HintPath>..\packages\ExcelNumberFormat.1.1.0\lib\net20\ExcelNumberFormat.dll</HintPath>
     </Reference>
+    <Reference Include="BouncyCastle.Crypto, Version=1.8.9.0, Culture=neutral, PublicKeyToken=0e99375e54769942, processorArchitecture=MSIL">
+      <HintPath>..\packages\BouncyCastle.1.8.9\lib\BouncyCastle.Crypto.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="itextsharp, Version=5.5.13.3, Culture=neutral, PublicKeyToken=8354ae6d2174ddca, processorArchitecture=MSIL">
+      <HintPath>..\packages\iTextSharp.5.5.13.3\lib\itextsharp.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="log4net, Version=2.0.16.0, Culture=neutral, PublicKeyToken=669e0ddf0bb1aa2a, processorArchitecture=MSIL">
       <HintPath>..\packages\log4net.2.0.16\lib\net45\log4net.dll</HintPath>
     </Reference>
@@ -194,6 +202,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ComingSoonController.cs" />
     <Compile Include="Controllers\ClosingStockController.cs" />
+    <Compile Include="Controllers\ManualEntryController.cs" />
     <Compile Include="Controllers\Masters\CommonController.cs" />
     <Compile Include="Controllers\Masters\CompanyMasterController.cs" />
     <!-- Excluded per cleanup (content modules) -->
@@ -1235,6 +1244,7 @@
     <Content Include="Views\Estimate\Index.cshtml" />
     <Content Include="Views\Estimate\Form.cshtml" />
     <Content Include="Views\ClosingStock\Index.cshtml" />
+    <Content Include="Views\ManualEntry\Index.cshtml" />
     <Content Include="Views\StockView\Index.cshtml" />
     <Content Include="Views\StockViewReport\Index.cshtml" />
     <Content Include="Views\Reports\RawMaterialsImport.cshtml" />

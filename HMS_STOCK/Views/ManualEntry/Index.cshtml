@@ -1,0 +1,191 @@
+@{
+    ViewBag.Title = "Manual Entry";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .main-container {
+        background: #ffffff;
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .content-wrapper {
+        background: rgba(255, 255, 255, 0.95);
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .filter-section {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #e9ecef;
+    }
+
+    .filter-row {
+        display: flex;
+        align-items: end;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .filter-label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .filter-dropdown {
+        width: 100%;
+        padding: 10px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        font-size: 14px;
+        background: white;
+        transition: border-color 0.3s;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-reset {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: transform 0.2s;
+    }
+
+    .btn-download {
+        background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        text-decoration: none;
+    }
+
+    .btn-download:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    /* Select2 Custom Styling */
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 45px;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 0 15px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 41px;
+        color: #495057;
+        padding-left: 0;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 41px;
+        right: 10px;
+    }
+</style>
+
+<div class="main-container">
+    <div class="content-wrapper">
+        <div class="table-container">
+            <div class="filter-section">
+                @using (Html.BeginForm("Index", "ManualEntry", FormMethod.Get, new { @class = "filter-form" }))
+                {
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="materialGroupId" class="filter-label">
+                                <i class="fa fa-filter"></i> Material Group
+                            </label>
+                            @Html.DropDownList("materialGroupId", (SelectList)ViewBag.MaterialGroups, "-- All Material Groups --", new { @class = "filter-dropdown select2-searchable", id = "materialGroupDropdown" })
+                        </div>
+
+                        <div class="filter-buttons">
+                            <a href="#" class="btn-download" id="btnDownload">
+                                <i class="fa fa-file-pdf-o"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#materialGroupDropdown').select2({
+                placeholder: '-- Search & Select Material Group --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('#btnDownload').on('click', function (e) {
+                e.preventDefault();
+                var gid = $('#materialGroupDropdown').val();
+                if (!gid || gid === "") {
+                    alert('Please select a Material Group');
+                    return;
+                }
+                var url = '@Url.Action("DownloadPdf", "ManualEntry")' + '?materialGroupId=' + encodeURIComponent(gid);
+                window.location = url;
+            });
+        });
+    </script>
+}
