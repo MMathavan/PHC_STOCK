@@ -70,7 +70,7 @@ namespace HMS_STOCK.Controllers
         private static byte[] BuildManualEntryPdf(string title, DateTime printedAt, List<ManualEntryRow> rows)
         {
             const int rowsPerPage = 37;
-            int totalPages = (int)Math.Ceiling((rows.Count == 0 ? 1 : rows.Count) / (double)rowsPerPage);
+            int totalPages = Math.Max(1, (int)Math.Ceiling(rows.Count / (double)rowsPerPage));
 
             using (var ms = new MemoryStream())
             {
@@ -87,9 +87,7 @@ namespace HMS_STOCK.Controllers
                     var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
                     var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
-                    int index = 0;
-                    int pageNo = 1;
-                    while (index < rows.Count || (rows.Count == 0 && pageNo == 1))
+                    for (int pageNo = 1; pageNo <= totalPages; pageNo++)
                     {
                         if (pageNo > 1)
                         {
@@ -107,24 +105,26 @@ namespace HMS_STOCK.Controllers
                         document.Add(new Paragraph(" "));
 
                         var table = new PdfPTable(5) { WidthPercentage = 100 };
-                        table.SetWidths(new float[] { 3.6f, 2.0f, 1.6f, 1.6f, 1.2f });
+                        table.SetWidths(new float[] { 4.6f, 1.7f, 1.4f, 2.0f, 0.9f });
+                        table.HeaderRows = 1;
 
                         var headerBg = new BaseColor(46, 117, 182);
-                        table.AddCell(MakeTableHeaderCell("TRANREFNAME", fontHeader, headerBg));
+                        table.AddCell(MakeTableHeaderCell("TRANDREFNAME", fontHeader, headerBg));
                         table.AddCell(MakeTableHeaderCell("BATCHNO", fontHeader, headerBg));
                         table.AddCell(MakeTableHeaderCell("STKEDATE", fontHeader, headerBg));
-                        table.AddCell(MakeTableHeaderCell("CURRENT\nBATCH NO", fontHeader, headerBg));
+                        table.AddCell(MakeTableHeaderCell("CURRENT BATCH NO", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_CENTER));
                         table.AddCell(MakeTableHeaderCell("PHY.QTY", fontHeader, headerBg));
 
+                        int index = (pageNo - 1) * rowsPerPage;
                         int rowCount = 0;
                         while (rowCount < rowsPerPage && index < rows.Count)
                         {
                             var r = rows[index];
 
-                            table.AddCell(MakeTableCell(r.TRANREFNAME, fontCell, Element.ALIGN_LEFT));
+                            table.AddCell(MakeTableCell(r.TRANREFNAME, fontCell, Element.ALIGN_LEFT, noWrap: false));
                             table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER));
-                            table.AddCell(MakeTableCell(r.CURRENTBATCHNO, fontCell, Element.ALIGN_LEFT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(r.PHYQTY.HasValue ? r.PHYQTY.Value.ToString("0.##") : "", fontCell, Element.ALIGN_RIGHT));
 
                             index++;
@@ -133,17 +133,28 @@ namespace HMS_STOCK.Controllers
 
                         if (rows.Count == 0)
                         {
-                            table.AddCell(MakeTableCell("", fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell("", fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell("", fontCell, Element.ALIGN_CENTER));
-                            table.AddCell(MakeTableCell("", fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell("", fontCell, Element.ALIGN_RIGHT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_RIGHT));
+                            rowCount = 1;
+                        }
+
+                        bool isLastPage = pageNo == totalPages;
+                        if (!isLastPage && rowCount < rowsPerPage)
+                        {
+                            for (int i = rowCount; i < rowsPerPage; i++)
+                            {
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_RIGHT));
+                            }
                         }
 
                         document.Add(table);
-
-                        pageNo++;
-                        if (rows.Count == 0) break;
                     }
 
                     document.Close();
@@ -163,26 +174,30 @@ namespace HMS_STOCK.Controllers
             };
         }
 
-        private static PdfPCell MakeTableHeaderCell(string text, Font font, BaseColor bg)
+        private static PdfPCell MakeTableHeaderCell(string text, Font font, BaseColor bg, bool noWrap = true, int align = Element.ALIGN_LEFT)
         {
             return new PdfPCell(new Phrase(text ?? string.Empty, font))
             {
                 BackgroundColor = bg,
-                HorizontalAlignment = Element.ALIGN_LEFT,
+                HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
-                PaddingTop = 6f,
-                PaddingBottom = 6f,
+                NoWrap = noWrap,
+                FixedHeight = 24f,
+                PaddingTop = 4f,
+                PaddingBottom = 4f,
                 PaddingLeft = 4f,
                 BorderWidth = 0.8f
             };
         }
 
-        private static PdfPCell MakeTableCell(string text, Font font, int align)
+        private static PdfPCell MakeTableCell(string text, Font font, int align, bool noWrap = true)
         {
             return new PdfPCell(new Phrase(text ?? string.Empty, font))
             {
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
+                NoWrap = noWrap,
+                FixedHeight = 16f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
