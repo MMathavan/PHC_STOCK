@@ -31,7 +31,7 @@ namespace HMS_STOCK.Controllers
 
         [HttpGet]
         [Route("ManualEntry/DownloadPdf")]
-        public ActionResult DownloadPdf(int materialGroupId)
+        public ActionResult DownloadPdf(int materialGroupId, string from, string to)
         {
             if (materialGroupId <= 0)
             {
@@ -48,22 +48,74 @@ namespace HMS_STOCK.Controllers
                 materialGroupName = "ManualEntry";
             }
 
-            var data = db.Database.SqlQuery<ManualEntryRow>(
-                    @"SELECT 
-                        TRANREFNAME,
-                        BATCHNO,
-                        STKEDATE,
-                        BATCHNO AS CURRENTBATCHNO,
-                        MTRLSTKQTY AS PHYQTY
-                    FROM StockMaster_2526
-                    WHERE MTRLGID = @p0
-                    ORDER BY TRANREFNAME, BATCHNO, STKEDATE",
-                    materialGroupId)
-                .ToList();
+            bool isTabletsGroup = string.Equals(materialGroupName.Trim(), "Tablets", StringComparison.OrdinalIgnoreCase);
+            string alphaFrom = null;
+            string alphaTo = null;
+            if (isTabletsGroup && !string.IsNullOrWhiteSpace(from) && !string.IsNullOrWhiteSpace(to))
+            {
+                alphaFrom = from.Trim().ToUpperInvariant();
+                alphaTo = to.Trim().ToUpperInvariant();
+
+                if (alphaFrom.Length != 1 || alphaTo.Length != 1)
+                {
+                    alphaFrom = null;
+                    alphaTo = null;
+                }
+                else
+                {
+                    char cf = alphaFrom[0];
+                    char ct = alphaTo[0];
+                    if (cf < 'A' || cf > 'Z' || ct < 'A' || ct > 'Z' || cf > ct)
+                    {
+                        alphaFrom = null;
+                        alphaTo = null;
+                    }
+                }
+            }
+
+            List<ManualEntryRow> data;
+            if (isTabletsGroup && alphaFrom != null && alphaTo != null)
+            {
+                data = db.Database.SqlQuery<ManualEntryRow>(
+                        @"SELECT 
+                            TRANREFNAME,
+                            BATCHNO,
+                            STKEDATE,
+                            BATCHNO AS CURRENTBATCHNO,
+                            MTRLSTKQTY AS PHYQTY
+                        FROM StockMaster_2526
+                        WHERE MTRLGID = @p0
+                          AND UPPER(LEFT(ISNULL(TRANREFNAME, ''), 1)) >= @p1
+                          AND UPPER(LEFT(ISNULL(TRANREFNAME, ''), 1)) <= @p2
+                        ORDER BY TRANREFNAME, BATCHNO, STKEDATE",
+                        materialGroupId, alphaFrom, alphaTo)
+                    .ToList();
+            }
+            else
+            {
+                data = db.Database.SqlQuery<ManualEntryRow>(
+                        @"SELECT 
+                            TRANREFNAME,
+                            BATCHNO,
+                            STKEDATE,
+                            BATCHNO AS CURRENTBATCHNO,
+                            MTRLSTKQTY AS PHYQTY
+                        FROM StockMaster_2526
+                        WHERE MTRLGID = @p0
+                        ORDER BY TRANREFNAME, BATCHNO, STKEDATE",
+                        materialGroupId)
+                    .ToList();
+            }
 
             byte[] pdfBytes = BuildManualEntryPdf(materialGroupName, DateTime.Now, data);
 
-            string safeFileName = MakeSafeFileName(materialGroupName) + ".pdf";
+            string fileTitle = materialGroupName;
+            if (isTabletsGroup && alphaFrom != null && alphaTo != null)
+            {
+                fileTitle = string.Format("{0} from {1} to {2}", materialGroupName.Trim(), alphaFrom, alphaTo);
+            }
+
+            string safeFileName = MakeSafeFileName(fileTitle) + ".pdf";
             return File(pdfBytes, "application/pdf", safeFileName);
         }
 
