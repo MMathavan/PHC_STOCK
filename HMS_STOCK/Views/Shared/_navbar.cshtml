@@ -273,173 +273,47 @@
                         }
                     }*@
 
-                    @* Transaction Menu - Role Based Access Control
-                       RMenuGroupId = 1 (Transaction)
-                       RMenuGroupOrder = Sequential order (1-3)
-                       
-                       Transaction Items:
-                       1. Raw Material Intake (RawMaterialIntake)
-                       2. Stock View (StockView)
-                       3. Invoice (RawMaterialInvoice)
-                    *@
-                    @if (Model != null && (isAdmin || 
-                        User.IsInRole("RawMaterialIntakeIndex") || 
-                        User.IsInRole("StockViewIndex") || 
-                        User.IsInRole("SupplierStockViewIndex") ||
-                        User.IsInRole("PurchaseInvoiceIndex") ||
-                        User.IsInRole("PurchaseInvoiceApprovalIndex")))
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="transactionDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-exchange-alt"></i> Transaction
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="transactionDropdown">
-                                <!-- Raw Material Intake - Order: 1, GroupId: 1 -->
-                                @if (User.IsInRole("RawMaterialIntakeIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "RawMaterialIntake")"
-                                           data-role="RawMaterialIntake" data-menugroupid="1" data-menuorder="1">
-                                            <i class="fa fa-truck-loading"></i> Raw Material Intake
-                                        </a>
-                                    </li>
-                                }
-                                @* Commented out other transaction menu items as requested
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")">
-                                        <i class="fa fa-flask"></i> Sampling & QC
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")">
-                                        <i class="fa fa-layer-group"></i> Slab Segregation
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")">
-                                        <i class="fa fa-calculator"></i> Rate Calculation
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")">
-                                        <i class="fa fa-check-circle"></i> Rate Confirmation
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")">
-                                        <i class="fa fa-file-invoice"></i> Purchase Invoice Generation
-                                    </a>
-                                </li>
-                                *@
-                                <!-- Stock View - Order: 2, GroupId: 1 -->
-                                @if (User.IsInRole("StockViewIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "StockView")"
-                                           data-role="StockView" data-menugroupid="1" data-menuorder="2">
-                                            <i class="fa fa-chart-line"></i> Item wise Stock View
-                                        </a>
-                                    </li>
-                                }
-                                <!-- Supplier wise Stock View - Order: 3, GroupId: 1 -->
-                                @if (User.IsInRole("SupplierStockViewIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "SupplierStockView")"
-                                           data-role="SupplierStockView" data-menugroupid="1" data-menuorder="3">
-                                           <i class="bi bi-clipboard-data-fill"></i> Supplier wise Stock View
-                                        </a>
-                                    </li>
-                                }
-                                <!-- Invoice - Order: 4, GroupId: 1 -->
-                                @if (User.IsInRole("PurchaseInvoiceIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "RawMaterialInvoice")"
-                                           data-role="RawMaterialInvoice" data-menugroupid="1" data-menuorder="4">
-                                            <i class="fa fa-file-invoice"></i> Invoice
-                                        </a>
-                                    </li>
-                                }
-                                <!-- Invoice Approval - Order: 5, GroupId: 1 -->
-                                @if (User.IsInRole("PurchaseInvoiceApprovalIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "PurchaseInvoiceApproval")"
-                                           data-role="PurchaseInvoiceApproval" data-menugroupid="1" data-menuorder="5">
-                                            <i class="fa fa-check-circle"></i> Invoice Approval
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        </li>
-                    }
+                    @* REMOVED: Transaction Menu - removed as per requirement *@
 
-                    @* Reports Menu - Role Based Access Control
-                       RMenuGroupId = 5 (Reports)
-                       
-                       Report Items:
-                       1. Stock View Report (StockViewReport)
-                       2. Raw Materials Intake Report (RawMaterialIntakeReport)
-                    *@
-                    @if (Model != null && (User.IsInRole("StockViewReportIndex") || User.IsInRole("RawMaterialIntakeReportIndex")))
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="reportsDropdownUser" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-file-alt"></i> Reports
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="reportsDropdownUser">
-                                <!-- Stock View Report - Order: 1, GroupId: 5 -->
-                                @if (User.IsInRole("StockViewReportIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("Index", "StockViewReport")"
-                                           data-role="StockViewReport" data-menugroupid="5" data-menuorder="1">
-                                            <i class="fa fa-chart-bar"></i> Stock View Report
-                                        </a>
-                                    </li>
-                                }
-                                <!-- Raw Materials Intake Report - Order: 2, GroupId: 5 -->
-                                @if (User.IsInRole("RawMaterialIntakeReportIndex"))
-                                {
-                                    <li>
-                                        <a class="dropdown-item" href="@Url.Action("RawMaterialsImport", "Reports")"
-                                           data-role="RawMaterialIntakeReport" data-menugroupid="5" data-menuorder="2">
-                                            <i class="fa fa-truck-loading"></i> Raw Materials Intake Report
-                                        </a>
-                                    </li>
-                                }
-                            </ul>
-                        </li>
-                    }
+                    @* NEW: Stock Menu with Closing submenu - HARDCODED *@
+@if (Request.IsAuthenticated)
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="stockDropdown" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-boxes"></i> Stock
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="stockDropdown">
+            <li>
+                <a class="dropdown-item" href="@Url.Action("Closing", "Stock")"
+                   data-role="StockClosing" data-menugroupid="100" data-menuorder="1">
+                    <i class="fa fa-stop-circle"></i> Closing
+                </a>
+            </li>
+        </ul>
+    </li>
+}
 
-                    @* Tally Menu - Role Based Access Control
-                       RMenuGroupId = 3 (Tally)
-                       RMenuGroupOrder = 1
-                       
-                       Tally Items:
-                       1. Invoice Updation to Tally (TallyInvoiceUpdation)
-                    *@
-                    @if (isAdmin)
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="tallyDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-calculator"></i> Tally
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="tallyDropdown">
-                                <!-- Invoice Updation to Tally - Order: 1, GroupId: 3 -->
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("Index", "ComingSoon")"
-                                       data-role="TallyInvoiceUpdation" data-menugroupid="3" data-menuorder="1">
-                                        <i class="fa fa-sync-alt"></i> Invoice Updation to Tally
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    }
+@* NEW: Reports Menu with Manual Entry submenu - HARDCODED *@
+@if (Request.IsAuthenticated)
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa fa-file-alt"></i> Reports
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+            <li>
+                <a class="dropdown-item" href="@Url.Action("ManualEntry", "Reports")"
+                   data-role="ReportsManualEntry" data-menugroupid="200" data-menuorder="1">
+                    <i class="fa fa-edit"></i> Manual Entry
+                </a>
+            </li>
+        </ul>
+    </li>
+}
+
+                    @* REMOVED: Tally Menu - removed as per requirement *@
 
                     @* Stock Menu *@
                     @*@if (isAdmin)
@@ -520,41 +394,7 @@
                         }
                     }
 
-                    @if (Model != null && (links.Any(x => x.MenuGId == 9)))
-                    {
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="smsDropdown" role="button"
-                               data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa fa-life-bouy"></i> SMS
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="smsDropdown">
-                                @if (Model != null)
-                                {
-                                    foreach (var item in Model)
-                                    {
-                                        if (item.MenuGId == 6)
-                                        {
-                                            <li class="@item.activeli">
-                                                <a class="dropdown-item" href="@Url.Action(item.ActionName, item.ControllerName)">
-                                                    <i class="@item.imageClass"></i> @item.LinkText
-                                                </a>
-                                            </li>
-                                        }
-                                    }
-                                }
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("ECSRemainder", "SMSTemplate")">
-                                        <i class="fa fa-fw fa-building"></i> ECS Customers
-                                    </a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="@Url.Action("ECSBounce", "SMSTemplate")">
-                                        <i class="fa fa-fw fa-building"></i> ECS Bounce
-                                    </a>
-                                </li>
-                            </ul>
-                        </li>
-                    }
+                    @* REMOVED: SMS Menu - removed as per requirement *@
                 </ul>
 
                 <!-- Right-aligned menu items -->
