@@ -444,15 +444,15 @@
                 <table id="stockTable" class="display table table-striped" cellspacing="0" width="100%">
                 <thead>
                     <tr>
-                        <th>TRANREFNAME</th>
-                        <th>MTRLGDESC</th>
-                        <th>MTRLDESC</th>
-                        <th>BATCHNO</th>
-                        <th>STKEDATE</th>
-                        <th>MTRLSTKQTY</th>
+                        <th>Material Group Description</th>
+                        <th>Material Description</th>
+                        <th>Batch No</th>
+                        <th>Expiry Date</th>
+                        <th>Closing Quantity</th>
+                        <th>P Rate</th>
+                        <th>Closing Value</th>
                         <th>CURRENT BATCH</th>
-                        <th>PHYSICAL QTY</th>
-                        <th>CLVALUE</th>
+                        <th>Physical Quantity</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -509,12 +509,6 @@
                     }
                 },
                 columns: [
-                    { 
-                        data: 'TRANREFNAME',
-                        render: function(data) {
-                            return '<span class="badge badge-info">' + data + '</span>';
-                        }
-                    },
                     { data: 'MTRLGDESC' },
                     { data: 'MTRLDESC' },
                     { 
@@ -537,6 +531,19 @@
                         }
                     },
                     {
+                        data: 'STKPRATE',
+                        render: function (data) {
+                            if (data === null || data === undefined || data === '') return '';
+                            return '₹' + parseFloat(data).toFixed(2);
+                        }
+                    },
+                    {
+                        data: 'CLVALUE',
+                        render: function(data) {
+                            return '<strong style="color: #667eea;">₹' + (data ? parseFloat(data).toFixed(2) : '0.00') + '</strong>';
+                        }
+                    },
+                    {
                         data: 'CURRENTBATCH',
                         orderable: false,
                         render: function (data, type, row) {
@@ -550,12 +557,6 @@
                         render: function (data, type, row) {
                             var v = (data || data === 0) ? data : '';
                             return '<input type="number" step="0.01" class="form-control form-control-sm inline-phyqty" value="' + v + '" data-original="' + v + '" />';
-                        }
-                    },
-                    { 
-                        data: 'CLVALUE',
-                        render: function(data) {
-                            return '<strong style="color: #667eea;">₹' + (data ? parseFloat(data).toFixed(2) : '0.00') + '</strong>';
                         }
                     },
                     {
@@ -578,7 +579,7 @@
                     processing: "<i class='fa fa-spinner fa-spin'></i> Loading..."
                 },
                 columnDefs: [
-                    { targets: [5, 8], className: 'text-right' }
+                    { targets: [4, 5, 6], className: 'text-right' }
                 ]
             });
 

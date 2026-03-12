@@ -67,10 +67,10 @@ namespace HMS_STOCK.Controllers
                 string sortDirection = request.Order != null && request.Order.Count > 0 ? request.Order[0].Dir : "asc";
 
                 // Map DataTables column index (as sent by the ClosingStock Index view) to database column name
-                // View columns: TRANREFNAME, MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE, MTRLSTKQTY, CURRENTBATCH, PHYQTY, CLVALUE, Action
+                // View columns: MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE, MTRLSTKQTY, STKPRATE, CLVALUE, CURRENTBATCH, PHYQTY, Action
                 string[] columns = new string[] {
-                    "TRANREFNAME", "MTRLGDESC", "MTRLDESC", "BATCHNO", "STKEDATE",
-                    "MTRLSTKQTY", "CURRENTBATCH", "PHYQTY", "CLVALUE"
+                    "MTRLGDESC", "MTRLDESC", "BATCHNO", "STKEDATE", "MTRLSTKQTY",
+                    "STKPRATE", "CLVALUE", "CURRENTBATCH", "PHYQTY"
                 };
 
                 string sortColumnName = sortColumn < columns.Length ? columns[sortColumn] : "TRANREFID";
