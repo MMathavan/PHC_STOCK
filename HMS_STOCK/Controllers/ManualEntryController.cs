@@ -78,16 +78,16 @@ namespace HMS_STOCK.Controllers
             {
                 data = db.Database.SqlQuery<ManualEntryRow>(
                         @"SELECT 
-                            TRANREFNAME,
+                            MTRLDESC AS TRANREFNAME,
                             BATCHNO,
                             STKEDATE,
                             BATCHNO AS CURRENTBATCHNO,
                             MTRLSTKQTY AS PHYQTY
                         FROM StockMaster_2526
                         WHERE MTRLGID = @p0
-                          AND UPPER(LEFT(ISNULL(TRANREFNAME, ''), 1)) >= @p1
-                          AND UPPER(LEFT(ISNULL(TRANREFNAME, ''), 1)) <= @p2
-                        ORDER BY TRANREFNAME, BATCHNO, STKEDATE",
+                          AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) >= @p1
+                          AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) <= @p2
+                        ORDER BY MTRLDESC, BATCHNO, STKEDATE",
                         materialGroupId, alphaFrom, alphaTo)
                     .ToList();
             }
@@ -95,14 +95,14 @@ namespace HMS_STOCK.Controllers
             {
                 data = db.Database.SqlQuery<ManualEntryRow>(
                         @"SELECT 
-                            TRANREFNAME,
+                            MTRLDESC AS TRANREFNAME,
                             BATCHNO,
                             STKEDATE,
                             BATCHNO AS CURRENTBATCHNO,
                             MTRLSTKQTY AS PHYQTY
                         FROM StockMaster_2526
                         WHERE MTRLGID = @p0
-                        ORDER BY TRANREFNAME, BATCHNO, STKEDATE",
+                        ORDER BY MTRLDESC, BATCHNO, STKEDATE",
                         materialGroupId)
                     .ToList();
             }
@@ -187,7 +187,7 @@ namespace HMS_STOCK.Controllers
                             table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER));
                             table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell(r.PHYQTY.HasValue ? r.PHYQTY.Value.ToString("0.##") : "", fontCell, Element.ALIGN_RIGHT));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_RIGHT));
 
                             index++;
                             rowCount++;
