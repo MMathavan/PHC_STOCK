@@ -49,6 +49,7 @@ namespace HMS_STOCK.Controllers
             ViewBag.SelectedMaterialGroup = materialGroupId;
             ViewBag.TotalQuantity = totalQty;
             ViewBag.TotalValue = totalValue;
+            ViewBag.ClosingStockSearch = Session != null ? (Session["ClosingStockSearch"] ?? string.Empty) : string.Empty;
 
             return View(new List<StockMaster_2526>());
         }
@@ -65,6 +66,11 @@ namespace HMS_STOCK.Controllers
                 string searchValue = request.Search?.Value ?? "";
                 int sortColumn = request.Order != null && request.Order.Count > 0 ? request.Order[0].Column : 0;
                 string sortDirection = request.Order != null && request.Order.Count > 0 ? request.Order[0].Dir : "asc";
+
+                if (Session != null)
+                {
+                    Session["ClosingStockSearch"] = searchValue ?? string.Empty;
+                }
 
                 // Map DataTables column index (as sent by the ClosingStock Index view) to database column name
                 // View columns: MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE, MTRLSTKQTY, STKPRATE, CLVALUE, CURRENTBATCH, PHYQTY, Action
@@ -99,28 +105,54 @@ namespace HMS_STOCK.Controllers
 
                 // Get filtered data
                 List<StockMaster_2526> stockData;
-                if (materialGroupId.HasValue && materialGroupId.Value > 0)
+
+                bool hasMaterialFilter = materialGroupId.HasValue && materialGroupId.Value > 0;
+                bool hasSearch = !string.IsNullOrWhiteSpace(searchValue);
+
+                if (hasMaterialFilter)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE MTRLGID = @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
-                    stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        query,
-                        materialGroupId.Value, startRowNum, endRowNum).ToList();
-                    
-                    filteredCount = db.Database.SqlQuery<int>(
-                        "SELECT COUNT(*) FROM StockMaster_2526 WHERE MTRLGID = @p0", materialGroupId.Value).FirstOrDefault();
+                    string where = "WHERE MTRLGID = @p0";
+                    if (hasSearch)
+                    {
+                        where += " AND (MTRLDESC LIKE @p1 OR BATCHNO LIKE @p1 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p1)";
+                    }
+
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
+
+                    if (hasSearch)
+                    {
+                        stockData = db.Database.SqlQuery<StockMaster_2526>(
+                            query,
+                            materialGroupId.Value, "%" + searchValue + "%", startRowNum, endRowNum).ToList();
+
+                        filteredCount = db.Database.SqlQuery<int>(
+                            "SELECT COUNT(*) FROM StockMaster_2526 " + where,
+                            materialGroupId.Value, "%" + searchValue + "%").FirstOrDefault();
+                    }
+                    else
+                    {
+                        stockData = db.Database.SqlQuery<StockMaster_2526>(
+                            query,
+                            materialGroupId.Value, startRowNum, endRowNum).ToList();
+
+                        filteredCount = db.Database.SqlQuery<int>(
+                            "SELECT COUNT(*) FROM StockMaster_2526 " + where,
+                            materialGroupId.Value).FirstOrDefault();
+                    }
                 }
-                else if (!string.IsNullOrEmpty(searchValue))
+                else if (hasSearch)
                 {
-                    var query = @"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + @") AS RowNum FROM StockMaster_2526 
-                        WHERE MTRLGDESC LIKE @p0 OR MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR TRANREFNAME LIKE @p0) AS T 
+                    var query = @"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + @") AS RowNum FROM StockMaster_2526
+                        WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0) AS T
                         WHERE T.RowNum BETWEEN @p1 AND @p2";
+
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
                         "%" + searchValue + "%", startRowNum, endRowNum).ToList();
-                    
+
                     filteredCount = db.Database.SqlQuery<int>(
-                        @"SELECT COUNT(*) FROM StockMaster_2526 
-                        WHERE MTRLGDESC LIKE @p0 OR MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR TRANREFNAME LIKE @p0",
+                        @"SELECT COUNT(*) FROM StockMaster_2526
+                          WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0",
                         "%" + searchValue + "%").FirstOrDefault();
                 }
                 else

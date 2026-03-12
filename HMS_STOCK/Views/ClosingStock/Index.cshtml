@@ -471,6 +471,7 @@
     <script>
         $(document).ready(function () {
             var selectedMaterialGroup = '@(ViewBag.SelectedMaterialGroup ?? "")';
+            var initialSearch = '@(ViewBag.ClosingStockSearch ?? "")';
 
             // Initialize Select2 on Material Group dropdown with search functionality
             $('#materialGroupDropdown').select2({
@@ -492,6 +493,7 @@
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 order: [[1, 'asc'], [2, 'asc'], [3, 'asc']],
+                search: { search: initialSearch },
                 processing: true,
                 serverSide: true,
                 ajax: {
