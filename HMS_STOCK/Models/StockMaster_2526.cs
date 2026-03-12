@@ -75,5 +75,18 @@ namespace HMS_STOCK.Models
         public decimal TRANBIGSTAMT { get; set; }
 
         public decimal? CLVALUE { get; set; }
+
+        [StringLength(50)]
+        public string CURRENTBATCH { get; set; }
+
+        public decimal? PHYQTY { get; set; }
+
+        [StringLength(100)]
+        public string CUSRID { get; set; }
+
+        [StringLength(100)]
+        public string LMUSRID { get; set; }
+
+        public DateTime? PRCSDATE { get; set; }
     }
 }

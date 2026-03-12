@@ -66,13 +66,11 @@ namespace HMS_STOCK.Controllers
                 int sortColumn = request.Order != null && request.Order.Count > 0 ? request.Order[0].Column : 0;
                 string sortDirection = request.Order != null && request.Order.Count > 0 ? request.Order[0].Dir : "asc";
 
-                // Map DataTables column index to database column name
+                // Map DataTables column index (as sent by the ClosingStock Index view) to database column name
+                // View columns: TRANREFNAME, MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE, MTRLSTKQTY, CURRENTBATCH, PHYQTY, CLVALUE, Action
                 string[] columns = new string[] {
-                    "STKBID", "TRANREFID", "TRANREFNAME", "TRANDREFGID", "MTRLGID",
-                    "TRANDREFID", "MTRLGDESC", "MTRLDESC", "DACHEADID", "PACKMID",
-                    "BATCHNO", "STKEDATE", "MTRLSTKQTY", "STKPRATE", "STKMRP",
-                    "ASTKSRATE", "HSNID", "TRANBCGSTEXPRN", "TRANBSGSTEXPRN", "TRANBIGSTEXPRN",
-                    "TRANBCGSTAMT", "TRANBSGSTAMT", "TRANBIGSTAMT", "CLVALUE"
+                    "TRANREFNAME", "MTRLGDESC", "MTRLDESC", "BATCHNO", "STKEDATE",
+                    "MTRLSTKQTY", "CURRENTBATCH", "PHYQTY", "CLVALUE"
                 };
 
                 string sortColumnName = sortColumn < columns.Length ? columns[sortColumn] : "TRANREFID";
@@ -156,7 +154,9 @@ namespace HMS_STOCK.Controllers
                     item.TRANBCGSTAMT,
                     item.TRANBSGSTAMT,
                     item.TRANBIGSTAMT,
-                    item.CLVALUE
+                    item.CLVALUE,
+                    item.CURRENTBATCH,
+                    item.PHYQTY
                 }).ToList();
 
                 return Json(new
@@ -178,6 +178,116 @@ namespace HMS_STOCK.Controllers
                     data = new List<StockMaster_2526>(),
                     error = ex.Message
                 }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
+        public JsonResult GetRow(int stkBid)
+        {
+            try
+            {
+                var row = db.Database.SqlQuery<StockMaster_2526>(
+                        "SELECT TOP 1 * FROM StockMaster_2526 WHERE STKBID = @p0",
+                        stkBid)
+                    .FirstOrDefault();
+
+                if (row == null)
+                {
+                    return Json(new { ok = false, message = "Record not found" }, JsonRequestBehavior.AllowGet);
+                }
+
+                return Json(new
+                {
+                    ok = true,
+                    data = new
+                    {
+                        row.STKBID,
+                        row.TRANREFID,
+                        row.MTRLGDESC,
+                        row.MTRLDESC,
+                        row.BATCHNO,
+                        STKEDATE = row.STKEDATE.ToString("yyyy-MM-dd"),
+                        row.MTRLSTKQTY,
+                        row.CURRENTBATCH,
+                        row.PHYQTY
+                    }
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpPost]
+        public JsonResult UpdatePhysical(int stkBid, string currentBatch, decimal? phyQty)
+        {
+            try
+            {
+                string currentUser = null;
+                if (Session != null && Session["CUSRID"] != null)
+                {
+                    currentUser = Session["CUSRID"].ToString();
+                }
+                if (string.IsNullOrWhiteSpace(currentUser) && User != null && User.Identity != null)
+                {
+                    currentUser = User.Identity.Name;
+                }
+                if (currentUser == null) currentUser = string.Empty;
+
+                db.Database.ExecuteSqlCommand(
+                    @"UPDATE StockMaster_2526
+                      SET CURRENTBATCH = @p1,
+                          PHYQTY = @p2,
+                          CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p3 ELSE CUSRID END,
+                          LMUSRID = @p3,
+                          PRCSDATE = GETDATE()
+                      WHERE STKBID = @p0",
+                    stkBid,
+                    (object)currentBatch ?? DBNull.Value,
+                    (object)phyQty ?? DBNull.Value,
+                    currentUser);
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public JsonResult DeletePhysical(int stkBid)
+        {
+            try
+            {
+                string currentUser = null;
+                if (Session != null && Session["CUSRID"] != null)
+                {
+                    currentUser = Session["CUSRID"].ToString();
+                }
+                if (string.IsNullOrWhiteSpace(currentUser) && User != null && User.Identity != null)
+                {
+                    currentUser = User.Identity.Name;
+                }
+                if (currentUser == null) currentUser = string.Empty;
+
+                db.Database.ExecuteSqlCommand(
+                    @"UPDATE StockMaster_2526
+                      SET CURRENTBATCH = NULL,
+                          PHYQTY = NULL,
+                          CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p1 ELSE CUSRID END,
+                          LMUSRID = @p1,
+                          PRCSDATE = GETDATE()
+                      WHERE STKBID = @p0",
+                    stkBid,
+                    currentUser);
+
+                return Json(new { ok = true });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message });
             }
         }
 

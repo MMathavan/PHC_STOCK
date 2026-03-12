@@ -450,16 +450,10 @@
                         <th>BATCHNO</th>
                         <th>STKEDATE</th>
                         <th>MTRLSTKQTY</th>
-                        <th>STKPRATE</th>
-                        <th>STKMRP</th>
-                        <th>ASTKSRATE</th>
-                        <th>CGST%</th>
-                        <th>SGST%</th>
-                        <th>IGST%</th>
-                        <th>CGST Amt</th>
-                        <th>SGST Amt</th>
-                        <th>IGST Amt</th>
+                        <th>CURRENT BATCH</th>
+                        <th>PHYSICAL QTY</th>
                         <th>CLVALUE</th>
+                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -542,34 +536,37 @@
                             return '<strong>' + data + '</strong>';
                         }
                     },
-                    { 
-                        data: 'STKPRATE',
-                        render: function(data) {
-                            return '₹' + parseFloat(data).toFixed(2);
+                    {
+                        data: 'CURRENTBATCH',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var v = data ? data : '';
+                            return '<input type="text" class="form-control form-control-sm inline-currentbatch" maxlength="50" value="' + $('<div/>').text(v).html() + '" data-original="' + $('<div/>').text(v).html() + '" />';
                         }
                     },
-                    { 
-                        data: 'STKMRP',
-                        render: function(data) {
-                            return '<span class="badge badge-success">₹' + parseFloat(data).toFixed(2) + '</span>';
+                    {
+                        data: 'PHYQTY',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var v = (data || data === 0) ? data : '';
+                            return '<input type="number" step="0.01" class="form-control form-control-sm inline-phyqty" value="' + v + '" data-original="' + v + '" />';
                         }
                     },
-                    { 
-                        data: 'ASTKSRATE',
-                        render: function(data) {
-                            return '₹' + parseFloat(data).toFixed(2);
-                        }
-                    },
-                    { data: 'TRANBCGSTEXPRN' },
-                    { data: 'TRANBSGSTEXPRN' },
-                    { data: 'TRANBIGSTEXPRN' },
-                    { data: 'TRANBCGSTAMT' },
-                    { data: 'TRANBSGSTAMT' },
-                    { data: 'TRANBIGSTAMT' },
                     { 
                         data: 'CLVALUE',
                         render: function(data) {
                             return '<strong style="color: #667eea;">₹' + (data ? parseFloat(data).toFixed(2) : '0.00') + '</strong>';
+                        }
+                    },
+                    {
+                        data: 'STKBID',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            return (
+                                '<button type="button" class="btn btn-sm btn-primary btn-inline-update" data-id="' + data + '"><i class="fa fa-save"></i> Update</button>' +
+                                ' <button type="button" class="btn btn-sm btn-danger btn-inline-delete" data-id="' + data + '"><i class="fa fa-trash"></i> Delete</button>'
+                            );
                         }
                     }
                 ],
@@ -581,8 +578,84 @@
                     processing: "<i class='fa fa-spinner fa-spin'></i> Loading..."
                 },
                 columnDefs: [
-                    { targets: [5, 6, 7, 8, 9, 10, 11, 12, 13, 14], className: 'text-right' }
+                    { targets: [5, 8], className: 'text-right' }
                 ]
+            });
+
+            $('#stockTable').on('click', '.btn-inline-delete', function () {
+                var id = $(this).data('id');
+                var $tr = $(this).closest('tr');
+
+                var cbNow = ($tr.find('.inline-currentbatch').val() || '').trim();
+                var pqNowRaw = ($tr.find('.inline-phyqty').val() || '').trim();
+                var pqNow = pqNowRaw;
+
+                if (cbNow === '' && pqNow === '') {
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete the entered CURRENT BATCH and PHYSICAL QTY for this row?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("DeletePhysical", "ClosingStock")',
+                    type: 'POST',
+                    data: { stkBid: id },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            alert(resp && resp.message ? resp.message : 'Delete failed');
+                            return;
+                        }
+
+                        $tr.find('.inline-currentbatch').attr('data-original', '').val('');
+                        $tr.find('.inline-phyqty').attr('data-original', '').val('');
+
+                        table.ajax.reload(null, false);
+                    },
+                    error: function () {
+                        alert('Delete failed');
+                    }
+                });
+            });
+
+            $('#stockTable').on('click', '.btn-inline-update', function () {
+                var id = $(this).data('id');
+                var $tr = $(this).closest('tr');
+                var cb = $tr.find('.inline-currentbatch').val();
+                var pq = $tr.find('.inline-phyqty').val();
+
+                var cbNow = (cb || '').trim();
+                var pqNow = (pq || '').toString().trim();
+                if (cbNow === '' && pqNow === '') {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("UpdatePhysical", "ClosingStock")',
+                    type: 'POST',
+                    data: { stkBid: id, currentBatch: cb, phyQty: pq },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            alert(resp && resp.message ? resp.message : 'Save failed');
+                            return;
+                        }
+
+                        $tr.find('.inline-currentbatch').attr('data-original', cb || '').val(cb || '');
+                        $tr.find('.inline-phyqty').attr('data-original', pq || '').val(pq || '');
+
+                        var cbShow = (cb || '').trim();
+                        var pqShow = (pq || '').toString().trim();
+                        if (cbShow !== '' || pqShow !== '') {
+                            alert('Saved Successfully');
+                        }
+
+                        table.ajax.reload(null, false);
+                    },
+                    error: function () {
+                        alert('Save failed');
+                    }
+                });
             });
         });
     </script>
