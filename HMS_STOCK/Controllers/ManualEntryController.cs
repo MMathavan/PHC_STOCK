@@ -166,11 +166,12 @@ namespace HMS_STOCK.Controllers
 
                         document.Add(new Paragraph(" "));
 
-                        var table = new PdfPTable(5) { WidthPercentage = 100 };
-                        table.SetWidths(new float[] { 4.6f, 1.7f, 1.4f, 2.0f, 0.9f });
+                        var table = new PdfPTable(6) { WidthPercentage = 100 };
+                        table.SetWidths(new float[] { 0.7f, 4.2f, 1.6f, 1.3f, 1.9f, 0.8f });
                         table.HeaderRows = 1;
 
                         var headerBg = new BaseColor(46, 117, 182);
+                        table.AddCell(MakeTableHeaderCell("S.NO", fontHeader, headerBg, noWrap: true, align: Element.ALIGN_CENTER));
                         table.AddCell(MakeTableHeaderCell("TRANDREFNAME", fontHeader, headerBg));
                         table.AddCell(MakeTableHeaderCell("BATCHNO", fontHeader, headerBg));
                         table.AddCell(MakeTableHeaderCell("STKEDATE", fontHeader, headerBg));
@@ -183,6 +184,8 @@ namespace HMS_STOCK.Controllers
                         {
                             var r = rows[index];
 
+                            int serialNo = index + 1;
+                            table.AddCell(MakeTableCell(serialNo.ToString(), fontCell, Element.ALIGN_CENTER));
                             table.AddCell(MakeTableCell(r.TRANREFNAME, fontCell, Element.ALIGN_LEFT, noWrap: false));
                             table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER));
@@ -195,6 +198,7 @@ namespace HMS_STOCK.Controllers
 
                         if (rows.Count == 0)
                         {
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
                             table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
                             table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
@@ -208,6 +212,7 @@ namespace HMS_STOCK.Controllers
                         {
                             for (int i = rowCount; i < rowsPerPage; i++)
                             {
+                                table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
                                 table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
                                 table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
                                 table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_CENTER));
