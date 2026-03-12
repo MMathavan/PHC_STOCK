@@ -73,7 +73,7 @@ namespace HMS_STOCK.Controllers
                     "STKPRATE", "CLVALUE", "CURRENTBATCH", "PHYQTY"
                 };
 
-                string sortColumnName = sortColumn < columns.Length ? columns[sortColumn] : "TRANREFID";
+                string sortColumnName = sortColumn < columns.Length ? columns[sortColumn] : "MTRLDESC";
 
                 // Calculate row numbers for paging
                 int startRowNum = start + 1;
@@ -101,8 +101,9 @@ namespace HMS_STOCK.Controllers
                 List<StockMaster_2526> stockData;
                 if (materialGroupId.HasValue && materialGroupId.Value > 0)
                 {
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE MTRLGID = @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY TRANREFID) AS RowNum FROM StockMaster_2526 WHERE MTRLGID = @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2",
+                        query,
                         materialGroupId.Value, startRowNum, endRowNum).ToList();
                     
                     filteredCount = db.Database.SqlQuery<int>(
@@ -110,10 +111,11 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (!string.IsNullOrEmpty(searchValue))
                 {
-                    stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        @"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY TRANREFID) AS RowNum FROM StockMaster_2526 
+                    var query = @"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + @") AS RowNum FROM StockMaster_2526 
                         WHERE MTRLGDESC LIKE @p0 OR MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR TRANREFNAME LIKE @p0) AS T 
-                        WHERE T.RowNum BETWEEN @p1 AND @p2",
+                        WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    stockData = db.Database.SqlQuery<StockMaster_2526>(
+                        query,
                         "%" + searchValue + "%", startRowNum, endRowNum).ToList();
                     
                     filteredCount = db.Database.SqlQuery<int>(
