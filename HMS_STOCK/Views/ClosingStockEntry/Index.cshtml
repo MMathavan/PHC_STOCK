@@ -42,7 +42,7 @@
     .table-container {
         padding: 30px;
         background: white;
-        overflow-x: auto;
+        overflow-x: hidden;
     }
 
     .filter-section {
@@ -242,12 +242,22 @@
 
     .table-responsive-wrapper {
         width: 100%;
-        overflow-x: hidden !important;
+        overflow-x: hidden;
+        overflow-y: hidden;
     }
 
     .table-responsive-wrapper::-webkit-scrollbar {
-        height: 0 !important;
-        display: none !important;
+        height: 10px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
     }
 
     .dataTables_wrapper {
@@ -267,14 +277,12 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         font-weight: 600;
-        padding: 8px 4px;
+        padding: 10px 12px;
         text-align: center;
         border: none;
-        font-size: 11px;
+        font-size: 12px;
         border-right: 1px solid rgba(255,255,255,0.2);
-        white-space: normal;
-        word-wrap: break-word;
-        max-width: 120px;
+        white-space: nowrap;
     }
 
     #closingStockEntryTable thead th:last-child {
@@ -282,11 +290,45 @@
     }
 
     #closingStockEntryTable tbody td {
-        padding: 6px 4px;
+        padding: 10px 12px;
         border-bottom: 1px solid #f0f0f0;
         vertical-align: middle;
         text-align: center;
-        font-size: 11px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    #closingStockEntryTable tbody td:nth-child(7),
+    #closingStockEntryTable tbody td:nth-child(8) {
+        text-align: left;
+    }
+
+    #closingStockEntryTable thead th:nth-child(7),
+    #closingStockEntryTable thead th:nth-child(8) {
+        text-align: left;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollBody {
+        overflow-x: auto !important;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollBody::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollBody::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollBody::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollHeadInner,
+    #closingStockEntryTable_wrapper .dataTables_scrollBody table {
+        width: max-content !important;
     }
 
     #closingStockEntryTable tbody tr:hover {
@@ -406,12 +448,6 @@
                             <th>TRANBSGSTAMT</th>
                             <th>TRANBIGSTAMT</th>
                             <th>CLVALUE</th>
-                            <th>CURRENTBATCH</th>
-                            <th>PHYQTY</th>
-                            <th>CUSRID</th>
-                            <th>LMUSRID</th>
-                            <th>PRCSDATE</th>
-                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -441,8 +477,9 @@
 
             var table = $('#closingStockEntryTable').DataTable({
                 responsive: false,
-                autoWidth: true,
-                scrollX: false,
+                autoWidth: false,
+                scrollX: true,
+                scrollCollapse: true,
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
                 order: [[7, 'asc']],
@@ -481,37 +518,33 @@
                     { data: 'TRANBCGSTAMT' },
                     { data: 'TRANBSGSTAMT' },
                     { data: 'TRANBIGSTAMT' },
-                    { data: 'CLVALUE' },
-                    {
-                        data: 'CURRENTBATCH',
-                        orderable: false,
-                        render: function (data, type, row) {
-                            var v = data ? data : '';
-                            return '<input type="text" class="form-control form-control-sm inline-currentbatch" maxlength="50" value="' + $('<div/>').text(v).html() + '" data-original="' + $('<div/>').text(v).html() + '" />';
-                        }
-                    },
-                    {
-                        data: 'PHYQTY',
-                        orderable: false,
-                        render: function (data, type, row) {
-                            var v = (data || data === 0) ? data : '';
-                            return '<input type="number" step="0.01" class="form-control form-control-sm inline-phyqty" value="' + v + '" data-original="' + v + '" />';
-                        }
-                    },
-                    { data: 'CUSRID' },
-                    { data: 'LMUSRID' },
-                    { data: 'PRCSDATE' },
-                    {
-                        data: 'STKBID',
-                        orderable: false,
-                        searchable: false,
-                        render: function (data, type, row) {
-                            return (
-                                '<button type="button" class="btn btn-sm btn-primary btn-inline-update" data-id="' + data + '"><i class="fa fa-save"></i> Update</button>' +
-                                ' <button type="button" class="btn btn-sm btn-danger btn-inline-delete" data-id="' + data + '"><i class="fa fa-trash"></i> Delete</button>'
-                            );
-                        }
-                    }
+                    { data: 'CLVALUE' }
+                ],
+                columnDefs: [
+                    { targets: 0, width: '80px' },
+                    { targets: 1, width: '90px' },
+                    { targets: 2, width: '140px' },
+                    { targets: 3, width: '90px' },
+                    { targets: 4, width: '80px' },
+                    { targets: 5, width: '90px' },
+                    { targets: 6, width: '160px' },
+                    { targets: 7, width: '260px' },
+                    { targets: 8, width: '90px' },
+                    { targets: 9, width: '80px' },
+                    { targets: 10, width: '120px' },
+                    { targets: 11, width: '110px' },
+                    { targets: 12, width: '120px' },
+                    { targets: 13, width: '90px' },
+                    { targets: 14, width: '90px' },
+                    { targets: 15, width: '100px' },
+                    { targets: 16, width: '80px' },
+                    { targets: 17, width: '130px' },
+                    { targets: 18, width: '130px' },
+                    { targets: 19, width: '130px' },
+                    { targets: 20, width: '120px' },
+                    { targets: 21, width: '120px' },
+                    { targets: 22, width: '120px' },
+                    { targets: 23, width: '120px' }
                 ],
                 dom: '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
                 language: {
@@ -520,82 +553,6 @@
                     zeroRecords: "No matching records found",
                     processing: "<i class=\'fa fa-spinner fa-spin\'></i> Loading..."
                 }
-            });
-
-            $('#closingStockEntryTable').on('click', '.btn-inline-delete', function () {
-                var id = $(this).data('id');
-                var $tr = $(this).closest('tr');
-
-                var cbNow = ($tr.find('.inline-currentbatch').val() || '').trim();
-                var pqNowRaw = ($tr.find('.inline-phyqty').val() || '').trim();
-                var pqNow = pqNowRaw;
-
-                if (cbNow === '' && pqNow === '') {
-                    return;
-                }
-
-                if (!confirm('Are you sure you want to delete the entered CURRENT BATCH and PHYSICAL QTY for this row?')) {
-                    return;
-                }
-
-                $.ajax({
-                    url: '@Url.Action("DeletePhysical", "ClosingStockEntry")',
-                    type: 'POST',
-                    data: { stkBid: id },
-                    success: function (resp) {
-                        if (!resp || !resp.ok) {
-                            alert(resp && resp.message ? resp.message : 'Delete failed');
-                            return;
-                        }
-
-                        $tr.find('.inline-currentbatch').attr('data-original', '').val('');
-                        $tr.find('.inline-phyqty').attr('data-original', '').val('');
-
-                        table.ajax.reload(null, false);
-                    },
-                    error: function () {
-                        alert('Delete failed');
-                    }
-                });
-            });
-
-            $('#closingStockEntryTable').on('click', '.btn-inline-update', function () {
-                var id = $(this).data('id');
-                var $tr = $(this).closest('tr');
-                var cb = $tr.find('.inline-currentbatch').val();
-                var pq = $tr.find('.inline-phyqty').val();
-
-                var cbNow = (cb || '').trim();
-                var pqNow = (pq || '').toString().trim();
-                if (cbNow === '' && pqNow === '') {
-                    return;
-                }
-
-                $.ajax({
-                    url: '@Url.Action("UpdatePhysical", "ClosingStockEntry")',
-                    type: 'POST',
-                    data: { stkBid: id, currentBatch: cb, phyQty: pq },
-                    success: function (resp) {
-                        if (!resp || !resp.ok) {
-                            alert(resp && resp.message ? resp.message : 'Save failed');
-                            return;
-                        }
-
-                        $tr.find('.inline-currentbatch').attr('data-original', cb || '').val(cb || '');
-                        $tr.find('.inline-phyqty').attr('data-original', pq || '').val(pq || '');
-
-                        var cbShow = (cb || '').trim();
-                        var pqShow = (pq || '').toString().trim();
-                        if (cbShow !== '' || pqShow !== '') {
-                            alert('Saved Successfully');
-                        }
-
-                        table.ajax.reload(null, false);
-                    },
-                    error: function () {
-                        alert('Save failed');
-                    }
-                });
             });
         });
     </script>
