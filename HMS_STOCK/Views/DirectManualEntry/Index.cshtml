@@ -21,21 +21,34 @@
         border: 1px solid #e9ecef;
     }
 
+    .page-header-bar {
+        background: linear-gradient(90deg, #2bb7ff 0%, #00e5ff 100%);
+        color: white;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-weight: 700;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
     .table-container {
         padding: 30px;
         background: white;
-        overflow-x: auto;
+        overflow-x: hidden;
     }
 
     .table-responsive-wrapper {
         width: 100%;
         overflow-x: hidden !important;
-        margin-top: 10px;
-    }
-
-    .table-responsive-wrapper::-webkit-scrollbar {
-        height: 0 !important;
-        display: none !important;
     }
 
     .dataTables_wrapper {
@@ -59,14 +72,12 @@
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         font-weight: 600;
-        padding: 8px 4px;
+        padding: 10px 12px;
         text-align: center;
         border: none;
-        font-size: 11px;
+        font-size: 12px;
         border-right: 1px solid rgba(255,255,255,0.2);
-        white-space: normal;
-        word-wrap: break-word;
-        max-width: 120px;
+        white-space: nowrap;
     }
 
     #manualEntryTable thead th:last-child {
@@ -74,11 +85,12 @@
     }
 
     #manualEntryTable tbody td {
-        padding: 6px 4px;
+        padding: 10px 12px;
         border-bottom: 1px solid #f0f0f0;
         vertical-align: middle;
         text-align: center;
-        font-size: 11px;
+        font-size: 12px;
+        white-space: nowrap;
     }
 
     #manualEntryTable tbody tr:hover {
@@ -88,14 +100,18 @@
     }
 
     .btn-add {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: #ff5b5b;
         color: white;
         border: none;
-        padding: 10px 20px;
-        border-radius: 25px;
+        padding: 8px 14px;
+        border-radius: 20px;
         font-weight: 600;
         text-decoration: none;
         transition: transform 0.2s;
+        font-size: 12px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .btn-add:hover {
@@ -139,16 +155,15 @@
 
 <div class="main-container">
     <div class="content-wrapper">
+        <div class="page-header-bar">
+            <h3 class="page-title">
+                <i class="bi bi-vector-pen"></i> Manual Stock Entry
+            </h3>
+            <a href="@Url.Action("Add", "DirectManualEntry")" class="btn-add">
+                <i class="fa fa-plus"></i> Add Manual Stock Entry
+            </a>
+        </div>
         <div class="table-container">
-            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                <h3 style="margin: 0; font-weight: 700; color: #2d3436;">
-                    <i class="bi bi-vector-pen" style="margin-right: 8px;"></i> Manual Stock Entry
-                </h3>
-                <a href="@Url.Action("Add", "DirectManualEntry")" class="btn-add">
-                    <i class="fa fa-plus"></i> Add Manual Stock Entry
-                </a>
-            </div>
-
             <div class="table-responsive-wrapper">
                 <table id="manualEntryTable" class="display table table-striped" cellspacing="0" width="100%">
                     <thead>
@@ -183,6 +198,9 @@
                 searching: true,
                 paging: true,
                 info: true,
+                autoWidth: false,
+                scrollX: true,
+                scrollCollapse: true,
                 order: [[1, 'asc']],
                 search: { search: initialSearch },
                 ajax: {
@@ -199,6 +217,17 @@
                     { data: 'CLVALUE' },
                     { data: 'CURRENTBATCH' },
                     { data: 'PHYQTY' }
+                ],
+                columnDefs: [
+                    { targets: 0, width: '180px' },
+                    { targets: 1, width: '260px' },
+                    { targets: 2, width: '120px' },
+                    { targets: 3, width: '120px' },
+                    { targets: 4, width: '130px' },
+                    { targets: 5, width: '100px' },
+                    { targets: 6, width: '130px' },
+                    { targets: 7, width: '150px' },
+                    { targets: 8, width: '140px' }
                 ],
                 language: {
                     search: "Search records:",
