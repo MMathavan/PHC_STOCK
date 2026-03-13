@@ -1,0 +1,602 @@
+@model IEnumerable<HMS_STOCK.Models.StockMaster_2526>
+
+@{
+    ViewBag.Title = "Closing Stock";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+<style>
+    .main-container {
+        background: white;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    .content-wrapper {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 20px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .header-section {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        padding: 25px 30px;
+        border-radius: 15px 15px 0 0;
+    }
+
+    .header-title {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+
+    .table-container {
+        padding: 30px;
+        background: white;
+        overflow-x: auto;
+    }
+
+    .filter-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 1px solid #dee2e6;
+    }
+
+    .filter-form {
+        margin: 0;
+    }
+
+    .filter-row {
+        display: flex;
+        align-items: flex-end;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+
+    .filter-group {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .filter-label {
+        display: block;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .filter-dropdown {
+        width: 100%;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 2px solid #ced4da;
+        font-size: 14px;
+        background: white;
+        transition: border-color 0.2s;
+    }
+
+    .select2-searchable {
+        width: 100% !important;
+    }
+
+    .select2-container {
+        width: 100% !important;
+    }
+
+    .select2-container--default .select2-selection--single {
+        height: 44px;
+        border: 2px solid #ced4da;
+        border-radius: 8px;
+        background: white;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
+        transition: all 0.3s ease;
+    }
+
+    .select2-container--default .select2-selection--single:hover {
+        border-color: #667eea;
+    }
+
+    .select2-container--default.select2-container--focus .select2-selection--single,
+    .select2-container--default.select2-container--open .select2-selection--single {
+        border-color: #667eea;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        color: #495057;
+        font-size: 14px;
+        padding-left: 0;
+        line-height: 40px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #6c757d;
+        font-size: 14px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 42px;
+        right: 10px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow b {
+        border-color: #495057 transparent transparent transparent;
+        border-width: 6px 5px 0 5px;
+    }
+
+    .select2-container--default.select2-container--open .select2-selection--single .select2-selection__arrow b {
+        border-color: transparent transparent #495057 transparent;
+        border-width: 0 5px 6px 5px;
+    }
+
+    .select2-dropdown {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-top: 4px;
+        background: white;
+    }
+
+    .select2-container--default .select2-search--dropdown {
+        padding: 8px;
+        background: white;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 2px solid #e9ecef;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .select2-container--default .select2-search--dropdown .select2-search__field:focus {
+        border-color: #667eea;
+        outline: 0;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+
+    .select2-container--default .select2-results__option {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .select2-container--default .select2-results__option[aria-selected=true] {
+        background-color: #e7f3ff;
+        color: #495057;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__clear {
+        color: #6c757d;
+        font-size: 18px;
+        margin-right: 5px;
+        cursor: pointer;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__clear:hover {
+        color: #dc3545;
+    }
+
+    .filter-dropdown:focus {
+        border-color: #667eea;
+        outline: none;
+    }
+
+    .filter-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    .btn-filter {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+
+    .btn-filter:hover {
+        transform: translateY(-2px);
+    }
+
+    .btn-reset {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        text-decoration: none;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: transform 0.2s;
+    }
+
+    .btn-reset:hover {
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: hidden !important;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar {
+        height: 0 !important;
+        display: none !important;
+    }
+
+    .dataTables_wrapper {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    #closingStockEntryTable {
+        width: 100% !important;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #closingStockEntryTable thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 8px 4px;
+        text-align: center;
+        border: none;
+        font-size: 11px;
+        border-right: 1px solid rgba(255,255,255,0.2);
+        white-space: normal;
+        word-wrap: break-word;
+        max-width: 120px;
+    }
+
+    #closingStockEntryTable thead th:last-child {
+        border-right: none;
+    }
+
+    #closingStockEntryTable tbody td {
+        padding: 6px 4px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    #closingStockEntryTable tbody tr:hover {
+        background-color: #f8f9ff;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .dataTables_length select {
+        border-radius: 20px;
+        padding: 5px 15px;
+        border: 1px solid #ddd;
+    }
+
+    .dataTables_filter input {
+        border-radius: 20px;
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+    }
+
+    .dataTables_filter label {
+        font-weight: 600;
+        color: #495057;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dataTables_paginate .paginate_button {
+        border-radius: 20px !important;
+        padding: 5px 15px !important;
+        margin: 0 2px !important;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+</style>
+
+<div class="main-container">
+    <div class="content-wrapper">
+        <div class="table-container">
+            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <h3 style="margin: 0; font-weight: 700; color: #2d3436;">
+                    <i class="fa fa-stop-circle" style="margin-right: 8px;"></i> Closing Stock
+                </h3>
+            </div>
+
+            <div class="summary-section" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                <div class="summary-card" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i class="fa fa-cubes"></i> Total Quantity
+                    </div>
+                    <div style="font-size: 28px; font-weight: 700;" id="totalQuantity">
+                        @(ViewBag.TotalQuantity != null ? String.Format("{0:N2}", ViewBag.TotalQuantity) : "0.00")
+                    </div>
+                </div>
+                <div class="summary-card" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%); color: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
+                        <i class="fa fa-money"></i> Total Value
+                    </div>
+                    <div style="font-size: 28px; font-weight: 700;" id="totalValue">
+                        @(ViewBag.TotalValue != null ? "₹" + String.Format("{0:N2}", ViewBag.TotalValue) : "₹0.00")
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-section">
+                @using (Html.BeginForm("Index", "ClosingStockEntry", FormMethod.Get, new { @class = "filter-form" }))
+                {
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <label for="materialGroupId" class="filter-label">
+                                <i class="fa fa-filter"></i> Material Group
+                            </label>
+                            @Html.DropDownList("materialGroupId", (SelectList)ViewBag.MaterialGroups, "-- All Material Groups --", new { @class = "filter-dropdown select2-searchable", id = "materialGroupDropdown" })
+                        </div>
+                        <div class="filter-buttons">
+                            <button type="submit" class="btn-filter">
+                                <i class="fa fa-search"></i> Filter
+                            </button>
+                            <a href="@Url.Action("Index", "ClosingStockEntry")" class="btn-reset">
+                                <i class="fa fa-refresh"></i> Reset
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table id="closingStockEntryTable" class="display table table-striped" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th>STKBID</th>
+                            <th>TRANREFID</th>
+                            <th>TRANREFNAME</th>
+                            <th>TRANDREFGID</th>
+                            <th>MTRLGID</th>
+                            <th>TRANDREFID</th>
+                            <th>MTRLGDESC</th>
+                            <th>MTRLDESC</th>
+                            <th>DACHEADID</th>
+                            <th>PACKMID</th>
+                            <th>BATCHNO</th>
+                            <th>STKEDATE</th>
+                            <th>MTRLSTKQTY</th>
+                            <th>STKPRATE</th>
+                            <th>STKMRP</th>
+                            <th>ASTKSRATE</th>
+                            <th>HSNID</th>
+                            <th>TRANBCGSTEXPRN</th>
+                            <th>TRANBSGSTEXPRN</th>
+                            <th>TRANBIGSTEXPRN</th>
+                            <th>TRANBCGSTAMT</th>
+                            <th>TRANBSGSTAMT</th>
+                            <th>TRANBIGSTAMT</th>
+                            <th>CLVALUE</th>
+                            <th>CURRENTBATCH</th>
+                            <th>PHYQTY</th>
+                            <th>CUSRID</th>
+                            <th>LMUSRID</th>
+                            <th>PRCSDATE</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            var selectedMaterialGroup = '@(ViewBag.SelectedMaterialGroup ?? "")';
+            var initialSearch = '@(ViewBag.ClosingStockEntrySearch ?? "")';
+
+            $('#materialGroupDropdown').select2({
+                placeholder: '-- Search & Select Material Group --',
+                allowClear: true,
+                width: '100%'
+            });
+
+            $('#materialGroupDropdown').on('change', function () {
+                $(this).closest('form').submit();
+            });
+
+            var table = $('#closingStockEntryTable').DataTable({
+                responsive: false,
+                autoWidth: true,
+                scrollX: false,
+                pageLength: 25,
+                lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+                order: [[7, 'asc']],
+                search: { search: initialSearch },
+                processing: true,
+                serverSide: true,
+                ajax: {
+                    url: '@Url.Action("GetStockData", "ClosingStockEntry")',
+                    type: 'POST',
+                    data: function (d) {
+                        d.MaterialGroupId = selectedMaterialGroup ? parseInt(selectedMaterialGroup) : null;
+                        return d;
+                    }
+                },
+                columns: [
+                    { data: 'STKBID' },
+                    { data: 'TRANREFID' },
+                    { data: 'TRANREFNAME' },
+                    { data: 'TRANDREFGID' },
+                    { data: 'MTRLGID' },
+                    { data: 'TRANDREFID' },
+                    { data: 'MTRLGDESC' },
+                    { data: 'MTRLDESC' },
+                    { data: 'DACHEADID' },
+                    { data: 'PACKMID' },
+                    { data: 'BATCHNO' },
+                    { data: 'STKEDATE' },
+                    { data: 'MTRLSTKQTY' },
+                    { data: 'STKPRATE' },
+                    { data: 'STKMRP' },
+                    { data: 'ASTKSRATE' },
+                    { data: 'HSNID' },
+                    { data: 'TRANBCGSTEXPRN' },
+                    { data: 'TRANBSGSTEXPRN' },
+                    { data: 'TRANBIGSTEXPRN' },
+                    { data: 'TRANBCGSTAMT' },
+                    { data: 'TRANBSGSTAMT' },
+                    { data: 'TRANBIGSTAMT' },
+                    { data: 'CLVALUE' },
+                    {
+                        data: 'CURRENTBATCH',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var v = data ? data : '';
+                            return '<input type="text" class="form-control form-control-sm inline-currentbatch" maxlength="50" value="' + $('<div/>').text(v).html() + '" data-original="' + $('<div/>').text(v).html() + '" />';
+                        }
+                    },
+                    {
+                        data: 'PHYQTY',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var v = (data || data === 0) ? data : '';
+                            return '<input type="number" step="0.01" class="form-control form-control-sm inline-phyqty" value="' + v + '" data-original="' + v + '" />';
+                        }
+                    },
+                    { data: 'CUSRID' },
+                    { data: 'LMUSRID' },
+                    { data: 'PRCSDATE' },
+                    {
+                        data: 'STKBID',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            return (
+                                '<button type="button" class="btn btn-sm btn-primary btn-inline-update" data-id="' + data + '"><i class="fa fa-save"></i> Update</button>' +
+                                ' <button type="button" class="btn btn-sm btn-danger btn-inline-delete" data-id="' + data + '"><i class="fa fa-trash"></i> Delete</button>'
+                            );
+                        }
+                    }
+                ],
+                dom: '<"row mb-3"<"col-md-6"l><"col-md-6"f>>rt<"row mt-3"<"col-md-6"i><"col-md-6"p>>',
+                language: {
+                    search: "Search records:",
+                    emptyTable: "No stock records available",
+                    zeroRecords: "No matching records found",
+                    processing: "<i class=\'fa fa-spinner fa-spin\'></i> Loading..."
+                }
+            });
+
+            $('#closingStockEntryTable').on('click', '.btn-inline-delete', function () {
+                var id = $(this).data('id');
+                var $tr = $(this).closest('tr');
+
+                var cbNow = ($tr.find('.inline-currentbatch').val() || '').trim();
+                var pqNowRaw = ($tr.find('.inline-phyqty').val() || '').trim();
+                var pqNow = pqNowRaw;
+
+                if (cbNow === '' && pqNow === '') {
+                    return;
+                }
+
+                if (!confirm('Are you sure you want to delete the entered CURRENT BATCH and PHYSICAL QTY for this row?')) {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("DeletePhysical", "ClosingStockEntry")',
+                    type: 'POST',
+                    data: { stkBid: id },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            alert(resp && resp.message ? resp.message : 'Delete failed');
+                            return;
+                        }
+
+                        $tr.find('.inline-currentbatch').attr('data-original', '').val('');
+                        $tr.find('.inline-phyqty').attr('data-original', '').val('');
+
+                        table.ajax.reload(null, false);
+                    },
+                    error: function () {
+                        alert('Delete failed');
+                    }
+                });
+            });
+
+            $('#closingStockEntryTable').on('click', '.btn-inline-update', function () {
+                var id = $(this).data('id');
+                var $tr = $(this).closest('tr');
+                var cb = $tr.find('.inline-currentbatch').val();
+                var pq = $tr.find('.inline-phyqty').val();
+
+                var cbNow = (cb || '').trim();
+                var pqNow = (pq || '').toString().trim();
+                if (cbNow === '' && pqNow === '') {
+                    return;
+                }
+
+                $.ajax({
+                    url: '@Url.Action("UpdatePhysical", "ClosingStockEntry")',
+                    type: 'POST',
+                    data: { stkBid: id, currentBatch: cb, phyQty: pq },
+                    success: function (resp) {
+                        if (!resp || !resp.ok) {
+                            alert(resp && resp.message ? resp.message : 'Save failed');
+                            return;
+                        }
+
+                        $tr.find('.inline-currentbatch').attr('data-original', cb || '').val(cb || '');
+                        $tr.find('.inline-phyqty').attr('data-original', pq || '').val(pq || '');
+
+                        var cbShow = (cb || '').trim();
+                        var pqShow = (pq || '').toString().trim();
+                        if (cbShow !== '' || pqShow !== '') {
+                            alert('Saved Successfully');
+                        }
+
+                        table.ajax.reload(null, false);
+                    },
+                    error: function () {
+                        alert('Save failed');
+                    }
+                });
+            });
+        });
+    </script>
+}

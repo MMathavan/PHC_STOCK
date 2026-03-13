@@ -285,14 +285,20 @@
         </a>
         <ul class="dropdown-menu" aria-labelledby="stockDropdown">
             <li>
+                <a class="dropdown-item" href="@Url.Action("Index", "ClosingStockEntry")"
+                   data-role="StockClosingEntry" data-menugroupid="100" data-menuorder="1">
+                    <i class="fa fa-stop-circle"></i> Closing Stock
+                </a>
+            </li>
+            <li>
                 <a class="dropdown-item" href="@Url.Action("Index", "ClosingStock")"
-                   data-role="StockClosing" data-menugroupid="100" data-menuorder="1">
+                   data-role="StockClosing" data-menugroupid="100" data-menuorder="2">
                     <i class="fa fa-stop-circle"></i> Physical Stock Entry
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" href="@Url.Action("Index", "DirectManualEntry")"
-                   data-role="StockManualEntry" data-menugroupid="100" data-menuorder="2">
+                   data-role="StockManualEntry" data-menugroupid="100" data-menuorder="3">
                     <i class="fa fa-edit"></i> Manual Entry
                 </a>
             </li>
