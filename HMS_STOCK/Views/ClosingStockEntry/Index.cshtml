@@ -23,11 +23,23 @@
         border: 1px solid #e9ecef;
     }
 
-    .header-section {
-        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    .page-header-bar {
+        background: linear-gradient(90deg, #2bb7ff 0%, #00e5ff 100%);
         color: white;
-        padding: 25px 30px;
-        border-radius: 15px 15px 0 0;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+    }
+
+    .page-title {
+        margin: 0;
+        font-weight: 700;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
     }
 
     .header-title {
@@ -372,13 +384,12 @@
 
 <div class="main-container">
     <div class="content-wrapper">
+        <div class="page-header-bar">
+            <h3 class="page-title">
+                <i class="fa fa-stop-circle"></i> Closing Stock
+            </h3>
+        </div>
         <div class="table-container">
-            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
-                <h3 style="margin: 0; font-weight: 700; color: #2d3436;">
-                    <i class="fa fa-stop-circle" style="margin-right: 8px;"></i> Closing Stock
-                </h3>
-            </div>
-
             <div class="summary-section" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div class="summary-card" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">
