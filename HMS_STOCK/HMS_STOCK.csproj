@@ -202,6 +202,7 @@
     <Compile Include="Controllers\HomeController.cs" />
     <Compile Include="Controllers\ComingSoonController.cs" />
     <Compile Include="Controllers\ClosingStockController.cs" />
+    <Compile Include="Controllers\DirectManualEntryController.cs" />
     <Compile Include="Controllers\ManualEntryController.cs" />
     <Compile Include="Controllers\Masters\CommonController.cs" />
     <Compile Include="Controllers\Masters\CompanyMasterController.cs" />
@@ -1245,6 +1246,8 @@
     <Content Include="Views\Estimate\Form.cshtml" />
     <Content Include="Views\ClosingStock\Index.cshtml" />
     <Content Include="Views\ManualEntry\Index.cshtml" />
+    <Content Include="Views\DirectManualEntry\Index.cshtml" />
+    <Content Include="Views\DirectManualEntry\Add.cshtml" />
     <Content Include="Views\StockView\Index.cshtml" />
     <Content Include="Views\StockViewReport\Index.cshtml" />
     <Content Include="Views\Reports\RawMaterialsImport.cshtml" />

@@ -1,0 +1,210 @@
+@model IEnumerable<HMS_STOCK.Models.StockMaster_2526>
+
+@{
+    ViewBag.Title = "Manual Entry";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<style>
+    .main-container {
+        background: white;
+        min-height: 100vh;
+        padding: 20px 0;
+    }
+
+    .content-wrapper {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 20px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .table-container {
+        padding: 30px;
+        background: white;
+        overflow-x: auto;
+    }
+
+    .table-responsive-wrapper {
+        width: 100%;
+        overflow-x: hidden !important;
+        margin-top: 10px;
+    }
+
+    .table-responsive-wrapper::-webkit-scrollbar {
+        height: 0 !important;
+        display: none !important;
+    }
+
+    .dataTables_wrapper {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .dataTables_length {
+        margin-bottom: 12px;
+    }
+
+    #manualEntryTable {
+        width: 100% !important;
+        border-collapse: separate;
+        border-spacing: 0;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    #manualEntryTable thead th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        padding: 8px 4px;
+        text-align: center;
+        border: none;
+        font-size: 11px;
+        border-right: 1px solid rgba(255,255,255,0.2);
+        white-space: normal;
+        word-wrap: break-word;
+        max-width: 120px;
+    }
+
+    #manualEntryTable thead th:last-child {
+        border-right: none;
+    }
+
+    #manualEntryTable tbody td {
+        padding: 6px 4px;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+        text-align: center;
+        font-size: 11px;
+    }
+
+    #manualEntryTable tbody tr:hover {
+        background-color: #f8f9ff;
+        transform: scale(1.01);
+        transition: all 0.2s ease;
+    }
+
+    .btn-add {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: transform 0.2s;
+    }
+
+    .btn-add:hover {
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .dataTables_length select {
+        border-radius: 20px;
+        padding: 5px 15px;
+        border: 1px solid #ddd;
+    }
+
+    .dataTables_filter input {
+        border-radius: 20px;
+        padding: 8px 15px;
+        border: 1px solid #ddd;
+    }
+
+    .dataTables_filter label {
+        font-weight: 600;
+        color: #495057;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .dataTables_paginate .paginate_button {
+        border-radius: 20px !important;
+        padding: 5px 15px !important;
+        margin: 0 2px !important;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+        border: none !important;
+    }
+</style>
+
+<div class="main-container">
+    <div class="content-wrapper">
+        <div class="table-container">
+            <div style="margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
+                <h3 style="margin: 0; font-weight: 700; color: #2d3436;">
+                    <i class="fa fa-edit" style="margin-right: 8px;"></i> Manual Entry
+                </h3>
+                <a href="@Url.Action("Add", "DirectManualEntry")" class="btn-add">
+                    <i class="fa fa-plus"></i> Add Manual Entry
+                </a>
+            </div>
+
+            <div class="table-responsive-wrapper">
+                <table id="manualEntryTable" class="display table table-striped" cellspacing="0" width="100%">
+                    <thead>
+                        <tr>
+                            <th>Material Group Description</th>
+                            <th>Material Description</th>
+                            <th>Batch No</th>
+                            <th>Expiry Date</th>
+                            <th>Closing Quantity</th>
+                            <th>P Rate</th>
+                            <th>Closing Value</th>
+                            <th>Current Batch</th>
+                            <th>Physical Quantity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var initialSearch = '@(ViewBag.DirectManualEntrySearch ?? "")';
+
+            $('#manualEntryTable').DataTable({
+                processing: true,
+                serverSide: true,
+                searching: true,
+                paging: true,
+                info: true,
+                order: [[1, 'asc']],
+                search: { search: initialSearch },
+                ajax: {
+                    url: '@Url.Action("GetManualEntryData", "DirectManualEntry")',
+                    type: 'POST'
+                },
+                columns: [
+                    { data: 'MTRLGDESC' },
+                    { data: 'MTRLDESC' },
+                    { data: 'BATCHNO' },
+                    { data: 'STKEDATE' },
+                    { data: 'MTRLSTKQTY' },
+                    { data: 'STKPRATE' },
+                    { data: 'CLVALUE' },
+                    { data: 'CURRENTBATCH' },
+                    { data: 'PHYQTY' }
+                ],
+                language: {
+                    search: "Search records:",
+                    emptyTable: "No records available"
+                }
+            });
+        });
+    </script>
+}

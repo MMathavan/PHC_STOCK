@@ -142,9 +142,7 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (hasSearch)
                 {
-                    var query = @"SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + @") AS RowNum FROM StockMaster_2526
-                        WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0) AS T
-                        WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
