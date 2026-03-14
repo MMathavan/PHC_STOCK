@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Data.SqlClient;
 using System.Web.Mvc;
 using HMS_STOCK.Models;
 
@@ -9,6 +10,41 @@ namespace HMS_STOCK.Controllers
     public class DirectManualEntryController : Controller
     {
         private readonly ApplicationDbContext db = new ApplicationDbContext();
+
+        private class MaterialGroupDropdownItem
+        {
+            public int MTRLGID { get; set; }
+            public string MTRLGDESC { get; set; }
+        }
+
+        private class MaterialDropdownItem
+        {
+            public int MTRLID { get; set; }
+            public string MTRLDESC { get; set; }
+        }
+
+        private void LoadMaterialGroups(int? selectedGroupId = null)
+        {
+            var groups = db.Database.SqlQuery<MaterialGroupDropdownItem>(
+                "SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER WHERE MTRLTID = 2 AND DISPSTATUS = 0 ORDER BY MTRLGDESC").ToList();
+
+            ViewBag.MaterialGroups = new SelectList(groups, "MTRLGID", "MTRLGDESC", selectedGroupId);
+        }
+
+        private void LoadMaterialsByGroup(int? materialGroupId, int? selectedMtrlId = null)
+        {
+            if (!materialGroupId.HasValue || materialGroupId.Value <= 0)
+            {
+                ViewBag.Materials = new SelectList(Enumerable.Empty<SelectListItem>(), "Value", "Text", selectedMtrlId);
+                return;
+            }
+
+            var materials = db.Database.SqlQuery<MaterialDropdownItem>(
+                "SELECT MTRLID, MTRLDESC FROM MATERIALMASTER WHERE MTRLGID = @p0 AND (DISPSTATUS = 0 OR DISPSTATUS IS NULL) ORDER BY MTRLDESC",
+                materialGroupId.Value).ToList();
+
+            ViewBag.Materials = new SelectList(materials, "MTRLID", "MTRLDESC", selectedMtrlId);
+        }
 
         [HttpGet]
         public ActionResult Index()
@@ -111,14 +147,65 @@ namespace HMS_STOCK.Controllers
         [HttpGet]
         public ActionResult Add()
         {
+            LoadMaterialGroups();
+            LoadMaterialsByGroup(null);
             return View();
+        }
+
+        [HttpGet]
+        public JsonResult GetMaterialsByGroup(int materialGroupId)
+        {
+            try
+            {
+                var materials = db.Database.SqlQuery<MaterialDropdownItem>(
+                    "SELECT MTRLID, MTRLDESC FROM MATERIALMASTER WHERE MTRLGID = @p0 AND (DISPSTATUS = 0 OR DISPSTATUS IS NULL) ORDER BY MTRLDESC",
+                    materialGroupId).ToList();
+
+                var data = materials.Select(m => new { id = m.MTRLID, text = m.MTRLDESC }).ToList();
+                return Json(data, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { error = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Add(FormCollection form)
+        public ActionResult Add(int? materialGroupId, int? mtrlid)
         {
-            return RedirectToAction("Index");
+            if (!materialGroupId.HasValue || materialGroupId.Value <= 0)
+            {
+                LoadMaterialGroups(materialGroupId);
+                LoadMaterialsByGroup(materialGroupId, mtrlid);
+                ViewBag.ErrorMessage = "Please select a Material Group.";
+                return View();
+            }
+
+            if (!mtrlid.HasValue || mtrlid.Value <= 0)
+            {
+                LoadMaterialGroups(materialGroupId);
+                LoadMaterialsByGroup(materialGroupId, mtrlid);
+                ViewBag.ErrorMessage = "Please select a Material.";
+                return View();
+            }
+
+            try
+            {
+                var p = new SqlParameter("@mtrlid", mtrlid.Value);
+                db.Database.ExecuteSqlCommand("EXEC PR_MANUALSTOCKENTRY_INSERT @mtrlid", p);
+
+                TempData["SuccessMessage"] = "Saved Successfully";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                LoadMaterialGroups(materialGroupId);
+                LoadMaterialsByGroup(materialGroupId, mtrlid);
+                ViewBag.ErrorMessage = ex.Message;
+                return View();
+            }
         }
 
         protected override void Dispose(bool disposing)

@@ -4,58 +4,176 @@
 }
 
 <style>
-    body {
-        background-color: #f8f9fa;
+    .main-container {
+        background: white;
+        min-height: 100vh;
+        padding: 20px 0;
     }
 
-    .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    .content-wrapper {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin: 20px;
+        overflow: hidden;
+        border: 1px solid #e9ecef;
+    }
+
+    .page-header-bar {
+        background: linear-gradient(90deg, #2bb7ff 0%, #00e5ff 100%);
         color: white;
-        padding: 20px;
-        border-radius: 10px;
-        margin-bottom: 20px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
     }
 
     .page-title {
-        font-size: 28px;
-        font-weight: 700;
         margin: 0;
+        font-weight: 700;
+        font-size: 16px;
         display: flex;
         align-items: center;
+        gap: 10px;
     }
 
-    .page-title i {
-        margin-right: 10px;
-        font-size: 24px;
-    }
-
-    .content-card {
+    .form-container {
+        padding: 22px 30px 26px 30px;
         background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
-        padding: 20px;
-        margin-bottom: 20px;
+    }
+
+    .form-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+        font-size: 13px;
+        display: block;
+    }
+
+    .select2-container { width: 100% !important; }
+
+    .select2-container--default .select2-selection--single {
+        height: 42px;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px;
+        padding-left: 0;
+        color: #495057;
+    }
+
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px;
+    }
+
+    .form-actions-row {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
     }
 </style>
 
-<div class="container-fluid">
-    <div class="page-header">
-        <h1 class="page-title"><i class="bi bi-vector-pen"></i> Manual Stock Entry - Add</h1>
-    </div>
+@section Styles {
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+}
 
-    <div class="content-card">
-        @using (Html.BeginForm("Add", "DirectManualEntry", FormMethod.Post))
-        {
-            @Html.AntiForgeryToken()
+<div class="main-container">
+    <div class="content-wrapper">
+        <div class="page-header-bar">
+            <h3 class="page-title">
+                <i class="bi bi-vector-pen"></i> Manual Stock Entry - Add
+            </h3>
+        </div>
 
-            <div class="alert alert-info">
-                Add form will be implemented.
-            </div>
+        <div class="form-container">
+            @using (Html.BeginForm("Add", "DirectManualEntry", FormMethod.Post))
+            {
+                @Html.AntiForgeryToken()
 
-            <div class="d-flex justify-content-end">
-                <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary mr-2">Back</a>
-                <button type="submit" class="btn btn-primary">Save</button>
-            </div>
-        }
+                if (ViewBag.ErrorMessage != null)
+                {
+                    <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+                }
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="materialGroupId" class="form-label">Material Group</label>
+                            @Html.DropDownList("materialGroupId", (SelectList)ViewBag.MaterialGroups, "-- Select Material Group --", new { @class = "form-control", id = "materialGroupId" })
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="mtrlid" class="form-label">Material</label>
+                            @Html.DropDownList("mtrlid", (SelectList)ViewBag.Materials, "-- Select Material --", new { @class = "form-control", id = "mtrlid" })
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-actions-row">
+                    <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">Back</a>
+                    <button type="submit" class="btn btn-primary">Save</button>
+                </div>
+            }
+        </div>
     </div>
 </div>
+
+@section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            var $group = $('#materialGroupId');
+            var $mtrl = $('#mtrlid');
+
+            if ($.fn.select2) {
+                $group.select2({
+                    placeholder: '-- Select Material Group --',
+                    allowClear: true,
+                    minimumResultsForSearch: 0,
+                    width: '100%'
+                });
+
+                $mtrl.select2({
+                    placeholder: '-- Select Material --',
+                    allowClear: true,
+                    minimumResultsForSearch: 0,
+                    width: '100%'
+                });
+            }
+
+            function resetMaterials() {
+                $mtrl.empty();
+                $mtrl.append($('<option></option>').val('').text('-- Select Material --'));
+                $mtrl.val('').trigger('change');
+            }
+
+            $group.on('change', function () {
+                var gid = $(this).val();
+                resetMaterials();
+
+                if (!gid) return;
+
+                $.ajax({
+                    url: '@Url.Action("GetMaterialsByGroup", "DirectManualEntry")',
+                    type: 'GET',
+                    data: { materialGroupId: gid },
+                    success: function (data) {
+                        if (!data || !data.length) return;
+                        for (var i = 0; i < data.length; i++) {
+                            $mtrl.append($('<option></option>').val(data[i].id).text(data[i].text));
+                        }
+                        $mtrl.trigger('change');
+                    }
+                });
+            });
+        });
+    </script>
+}
