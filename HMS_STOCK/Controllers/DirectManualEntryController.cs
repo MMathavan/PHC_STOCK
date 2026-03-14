@@ -45,7 +45,7 @@ namespace HMS_STOCK.Controllers
                 int endRowNum = start + length;
 
                 int totalCount = db.Database.SqlQuery<int>(
-                    "SELECT COUNT(*) FROM StockMaster_2526").FirstOrDefault();
+                    "SELECT COUNT(*) FROM StockMaster_2526 WHERE STKBID = 0").FirstOrDefault();
 
                 int filteredCount = totalCount;
                 List<StockMaster_2526> rows;
@@ -54,7 +54,7 @@ namespace HMS_STOCK.Controllers
 
                 if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     rows = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -62,13 +62,13 @@ namespace HMS_STOCK.Controllers
 
                     filteredCount = db.Database.SqlQuery<int>(
                         @"SELECT COUNT(*) FROM StockMaster_2526
-                          WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0",
+                          WHERE STKBID = 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)",
                         "%" + searchValue + "%").FirstOrDefault();
                 }
                 else
                 {
                     rows = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 
