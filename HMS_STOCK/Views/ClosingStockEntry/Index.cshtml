@@ -258,6 +258,32 @@
         overflow-y: hidden;
     }
 
+    .top-scrollbar {
+        width: 100%;
+        overflow-x: auto;
+        overflow-y: hidden;
+        height: 12px;
+        margin-bottom: 8px;
+    }
+
+    .top-scrollbar::-webkit-scrollbar {
+        height: 10px;
+    }
+
+    .top-scrollbar::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 10px;
+    }
+
+    .top-scrollbar::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .top-scrollbar-inner {
+        height: 1px;
+    }
+
     .table-responsive-wrapper::-webkit-scrollbar {
         height: 10px;
     }
@@ -432,6 +458,9 @@
             </div>
 
             <div class="table-responsive-wrapper">
+                <div id="topGridScrollbar" class="top-scrollbar">
+                    <div id="topGridScrollbarInner" class="top-scrollbar-inner"></div>
+                </div>
                 <table id="closingStockEntryTable" class="display table table-striped" cellspacing="0" width="100%">
                     <thead>
                         <tr>
@@ -565,6 +594,32 @@
                     processing: "<i class=\'fa fa-spinner fa-spin\'></i> Loading..."
                 }
             });
+
+            function syncTopScrollbar() {
+                var $scrollBody = $('#closingStockEntryTable_wrapper .dataTables_scrollBody');
+                var $scrollHeadInner = $('#closingStockEntryTable_wrapper .dataTables_scrollHeadInner');
+                var $top = $('#topGridScrollbar');
+                var $topInner = $('#topGridScrollbarInner');
+
+                if (!$scrollBody.length || !$scrollHeadInner.length || !$top.length || !$topInner.length) return;
+
+                // Ensure inner width matches the actual table width in the scroll head
+                $topInner.width($scrollHeadInner.outerWidth());
+
+                // Avoid duplicate bindings
+                $top.off('scroll.topSync');
+                $scrollBody.off('scroll.topSync');
+
+                $top.on('scroll.topSync', function () {
+                    $scrollBody.scrollLeft($top.scrollLeft());
+                });
+                $scrollBody.on('scroll.topSync', function () {
+                    $top.scrollLeft($scrollBody.scrollLeft());
+                });
+            }
+
+            syncTopScrollbar();
+            table.on('draw', syncTopScrollbar);
         });
     </script>
 }
