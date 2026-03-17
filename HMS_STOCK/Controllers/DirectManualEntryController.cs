@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Data;
 using System.Data.SqlClient;
 using System.Web.Mvc;
 using HMS_STOCK.Models;
@@ -10,6 +11,52 @@ namespace HMS_STOCK.Controllers
     public class DirectManualEntryController : Controller
     {
         private readonly ApplicationDbContext db = new ApplicationDbContext();
+
+        private static T GetDictValue<T>(Dictionary<string, object> dict, string key, T defaultValue = default(T))
+        {
+            if (dict == null || string.IsNullOrWhiteSpace(key))
+            {
+                return defaultValue;
+            }
+
+            object raw;
+            if (!dict.TryGetValue(key, out raw) || raw == null || raw == DBNull.Value)
+            {
+                return defaultValue;
+            }
+
+            try
+            {
+                if (raw is T)
+                {
+                    return (T)raw;
+                }
+                return (T)Convert.ChangeType(raw, typeof(T));
+            }
+            catch
+            {
+                return defaultValue;
+            }
+        }
+
+        private static object ToDbValue(object val)
+        {
+            return val == null ? (object)DBNull.Value : val;
+        }
+
+        private string GetCurrentUserId()
+        {
+            if (Session != null && Session["CUSRID"] != null)
+            {
+                var s = Convert.ToString(Session["CUSRID"]);
+                if (!string.IsNullOrWhiteSpace(s))
+                {
+                    return s;
+                }
+            }
+
+            return User != null && User.Identity != null ? (User.Identity.Name ?? string.Empty) : string.Empty;
+        }
 
         private class MaterialGroupDropdownItem
         {
@@ -21,6 +68,12 @@ namespace HMS_STOCK.Controllers
         {
             public int MTRLID { get; set; }
             public string MTRLDESC { get; set; }
+        }
+
+        private class MaterialGroupByMaterialItem
+        {
+            public int MTRLGID { get; set; }
+            public string MTRLGDESC { get; set; }
         }
 
         private void LoadMaterialGroups(int? selectedGroupId = null)
@@ -42,6 +95,14 @@ namespace HMS_STOCK.Controllers
             var materials = db.Database.SqlQuery<MaterialDropdownItem>(
                 "SELECT MTRLID, MTRLDESC FROM MATERIALMASTER WHERE MTRLGID = @p0 AND (DISPSTATUS = 0 OR DISPSTATUS IS NULL) ORDER BY MTRLDESC",
                 materialGroupId.Value).ToList();
+
+            ViewBag.Materials = new SelectList(materials, "MTRLID", "MTRLDESC", selectedMtrlId);
+        }
+
+        private void LoadAllMaterials(int? selectedMtrlId = null)
+        {
+            var materials = db.Database.SqlQuery<MaterialDropdownItem>(
+                "SELECT DISTINCT MTRLID, MTRLDESC FROM VW_MATEIRAL_DETAIL_STOCK_2526 ORDER BY MTRLDESC").ToList();
 
             ViewBag.Materials = new SelectList(materials, "MTRLID", "MTRLDESC", selectedMtrlId);
         }
@@ -110,6 +171,7 @@ namespace HMS_STOCK.Controllers
 
                 var formattedData = rows.Select(item => new
                 {
+                    item.SID,
                     item.STKBID,
                     item.MTRLGDESC,
                     item.MTRLDESC,
@@ -145,10 +207,98 @@ namespace HMS_STOCK.Controllers
         }
 
         [HttpGet]
+        public ActionResult Edit(int id)
+        {
+            var row = db.Database.SqlQuery<StockMaster_2526>(
+                "SELECT TOP 1 * FROM StockMaster_2526 WHERE SID = @p0", id).FirstOrDefault();
+
+            if (row == null)
+            {
+                return HttpNotFound();
+            }
+
+            LoadAllMaterials(row.TRANREFID);
+            ViewBag.IsEdit = true;
+            ViewBag.SID = row.SID;
+            ViewBag.CurrentBatch = row.CURRENTBATCH;
+            ViewBag.PhyQty = row.PHYQTY;
+            ViewBag.ExpiryDate = row.STKEDATE.ToString("yyyy-MM-dd");
+            return View("Add");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public ActionResult Edit(int SID, int? mtrlid, string currentBatch, decimal? phyQty, DateTime? expiryDate)
+        {
+            if (!mtrlid.HasValue || mtrlid.Value <= 0)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.IsEdit = true;
+                ViewBag.SID = SID;
+                ViewBag.ErrorMessage = "Please select a Material.";
+                return View("Add");
+            }
+
+            try
+            {
+                string userId = GetCurrentUserId();
+                DateTime prcsDate = DateTime.Now;
+                DateTime newExpiry = expiryDate ?? DateTime.Now;
+
+                db.Database.ExecuteSqlCommand(@"
+UPDATE StockMaster_2526
+SET
+    STKEDATE = @p0,
+    LMUSRID = @p1,
+    PRCSDATE = @p2
+WHERE SID = @p3",
+                    newExpiry,
+                    ToDbValue(userId),
+                    prcsDate,
+                    SID);
+
+                TempData["SuccessMessage"] = "Updated Successfully";
+                return RedirectToAction("Index");
+            }
+            catch (Exception ex)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.IsEdit = true;
+                ViewBag.SID = SID;
+                ViewBag.CurrentBatch = currentBatch;
+                ViewBag.PhyQty = phyQty;
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = ex.Message;
+                return View("Add");
+            }
+        }
+
+        [HttpPost]
+        public JsonResult Delete(int id)
+        {
+            try
+            {
+                int affected = db.Database.ExecuteSqlCommand(
+                    "DELETE FROM StockMaster_2526 WHERE SID = @p0", id);
+
+                if (affected <= 0)
+                {
+                    return Json(new { ok = false, message = "Record not found." }, JsonRequestBehavior.AllowGet);
+                }
+
+                return Json(new { ok = true }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        [HttpGet]
         public ActionResult Add()
         {
-            LoadMaterialGroups();
-            LoadMaterialsByGroup(null);
+            LoadAllMaterials();
             return View();
         }
 
@@ -171,38 +321,208 @@ namespace HMS_STOCK.Controllers
             }
         }
 
+        [HttpGet]
+        public JsonResult GetMaterialDetails(int mtrlid)
+        {
+            try
+            {
+                var opening = GetTop1RowAsDictionary("Z_OPENING_SUPPLIER_HSN_DETAIL_ASSGN_001", mtrlid);
+                var material = GetTop1RowAsDictionary("Z_VW_MATERIAL_HSN_DETAIL_ASSGN", mtrlid);
+
+                var group = db.Database.SqlQuery<MaterialGroupByMaterialItem>(
+                    @"SELECT TOP 1 g.MTRLGID, g.MTRLGDESC
+                      FROM MATERIALMASTER m
+                      INNER JOIN MATERIALGROUPMASTER g ON m.MTRLGID = g.MTRLGID
+                      WHERE m.MTRLID = @p0",
+                    mtrlid).FirstOrDefault();
+
+                return Json(new
+                {
+                    ok = true,
+                    opening,
+                    material,
+                    group
+                }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                Response.StatusCode = 500;
+                return Json(new { ok = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        private Dictionary<string, object> GetTop1RowAsDictionary(string viewName, int mtrlid)
+        {
+            var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            string sql = "SELECT TOP 1 * FROM " + viewName + " WHERE MTRLID = @mtrlid";
+
+            var dt = new DataTable();
+            using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+            using (var cmd = new SqlCommand(sql, conn))
+            using (var da = new SqlDataAdapter(cmd))
+            {
+                cmd.Parameters.AddWithValue("@mtrlid", mtrlid);
+                conn.Open();
+                da.Fill(dt);
+            }
+
+            if (dt.Rows.Count == 0)
+            {
+                return result;
+            }
+
+            var row = dt.Rows[0];
+            foreach (DataColumn col in dt.Columns)
+            {
+                var val = row[col];
+                result[col.ColumnName] = val == DBNull.Value ? null : val;
+            }
+
+            return result;
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Add(int? materialGroupId, int? mtrlid)
+        public ActionResult Add(int? mtrlid, string currentBatch, decimal? phyQty, DateTime? expiryDate)
         {
-            if (!materialGroupId.HasValue || materialGroupId.Value <= 0)
+            if (!mtrlid.HasValue || mtrlid.Value <= 0)
             {
-                LoadMaterialGroups(materialGroupId);
-                LoadMaterialsByGroup(materialGroupId, mtrlid);
-                ViewBag.ErrorMessage = "Please select a Material Group.";
+                LoadAllMaterials(mtrlid);
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = "Please select a Material.";
                 return View();
             }
 
-            if (!mtrlid.HasValue || mtrlid.Value <= 0)
+            if (string.IsNullOrWhiteSpace(currentBatch))
             {
-                LoadMaterialGroups(materialGroupId);
-                LoadMaterialsByGroup(materialGroupId, mtrlid);
-                ViewBag.ErrorMessage = "Please select a Material.";
+                LoadAllMaterials(mtrlid);
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = "Please enter Current Batch.";
+                return View();
+            }
+
+            if (!phyQty.HasValue)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = "Please enter Physical Quantity.";
                 return View();
             }
 
             try
             {
-                var p = new SqlParameter("@mtrlid", mtrlid.Value);
-                db.Database.ExecuteSqlCommand("EXEC PR_MANUALSTOCKENTRY_INSERT @mtrlid", p);
+                var opening = GetTop1RowAsDictionary("Z_OPENING_SUPPLIER_HSN_DETAIL_ASSGN_001", mtrlid.Value);
+                var material = GetTop1RowAsDictionary("Z_VW_MATERIAL_HSN_DETAIL_ASSGN", mtrlid.Value);
+
+                var mm = db.Database.SqlQuery<MaterialDropdownItem>(
+                    "SELECT TOP 1 MTRLID, MTRLDESC FROM MATERIALMASTER WHERE MTRLID = @p0", mtrlid.Value).FirstOrDefault();
+
+                var group = db.Database.SqlQuery<MaterialGroupByMaterialItem>(
+                    @"SELECT TOP 1 g.MTRLGID, g.MTRLGDESC
+                      FROM MATERIALMASTER m
+                      INNER JOIN MATERIALGROUPMASTER g ON m.MTRLGID = g.MTRLGID
+                      WHERE m.MTRLID = @p0",
+                    mtrlid.Value).FirstOrDefault();
+
+                int stkBid = 0;
+                int tranRefId = mtrlid.Value;
+                string tranRefName = GetDictValue<string>(opening, "TRANREFNAME", null) ?? (mm != null ? mm.MTRLDESC : null) ?? string.Empty;
+                int? mtrlGid = group != null ? (int?)group.MTRLGID : GetDictValue<int?>(opening, "MTRLGID", null);
+                int trandRefGid = mtrlGid.HasValue ? mtrlGid.Value : 0;
+                int? trandRefId = GetDictValue<int?>(opening, "TRANDREFID", null);
+                string mtrlGDesc = group != null ? group.MTRLGDESC : GetDictValue<string>(opening, "MTRLGDESC", null);
+                string mtrlDesc = (mm != null ? mm.MTRLDESC : null) ?? GetDictValue<string>(opening, "TRANDREFNAME", null) ?? GetDictValue<string>(opening, "MTRLDESC", null);
+                int dacheadId = 44;
+                int packMid = 2;
+                string batchNo = currentBatch;
+                DateTime stkeDate = expiryDate ?? DateTime.Now;
+                decimal? mtrlStkQty = phyQty;
+                decimal stkPrate = GetDictValue<decimal>(opening, "STKPRATE", 0m);
+                decimal stkMrp = GetDictValue<decimal>(opening, "STKMRP", 0m);
+                decimal astkSRate = GetDictValue<decimal>(opening, "ASTKSRATE", GetDictValue<decimal>(opening, "ASTKPRATE", 0m));
+                int hsnId = GetDictValue<int>(material, "HSNID", GetDictValue<int>(opening, "HSNID", 0));
+                decimal cgstExprn = GetDictValue<decimal>(material, "CGSTEXPRN", GetDictValue<decimal>(opening, "TRANBCGSTEXPRN", 0m));
+                decimal sgstExprn = GetDictValue<decimal>(material, "SGSTEXPRN", GetDictValue<decimal>(opening, "TRANBSGSTEXPRN", 0m));
+                decimal igstExprn = 0m;
+                decimal cgstAmt = 0m;
+                decimal sgstAmt = 0m;
+                decimal igstAmt = 0m;
+                decimal? clValue = GetDictValue<decimal?>(opening, "CLVALUE", null);
+
+                string userId = GetCurrentUserId();
+                DateTime prcsDate = DateTime.Now;
+
+                var sql =
+                    "EXEC PR_MANUALSTOCKENTRY_INSERT " +
+                    "@STKBID=@STKBID, " +
+                    "@TRANREFID=@TRANREFID, " +
+                    "@TRANREFNAME=@TRANREFNAME, " +
+                    "@TRANDREFGID=@TRANDREFGID, " +
+                    "@MTRLGID=@MTRLGID, " +
+                    "@TRANDREFID=@TRANDREFID, " +
+                    "@MTRLGDESC=@MTRLGDESC, " +
+                    "@MTRLDESC=@MTRLDESC, " +
+                    "@DACHEADID=@DACHEADID, " +
+                    "@PACKMID=@PACKMID, " +
+                    "@BATCHNO=@BATCHNO, " +
+                    "@STKEDATE=@STKEDATE, " +
+                    "@MTRLSTKQTY=@MTRLSTKQTY, " +
+                    "@STKPRATE=@STKPRATE, " +
+                    "@STKMRP=@STKMRP, " +
+                    "@ASTKSRATE=@ASTKSRATE, " +
+                    "@HSNID=@HSNID, " +
+                    "@TRANBCGSTEXPRN=@TRANBCGSTEXPRN, " +
+                    "@TRANBSGSTEXPRN=@TRANBSGSTEXPRN, " +
+                    "@TRANBIGSTEXPRN=@TRANBIGSTEXPRN, " +
+                    "@TRANBCGSTAMT=@TRANBCGSTAMT, " +
+                    "@TRANBSGSTAMT=@TRANBSGSTAMT, " +
+                    "@TRANBIGSTAMT=@TRANBIGSTAMT, " +
+                    "@CLVALUE=@CLVALUE, " +
+                    "@CURRENTBATCH=@CURRENTBATCH, " +
+                    "@PHYQTY=@PHYQTY, " +
+                    "@CUSRID=@CUSRID, " +
+                    "@LMUSRID=@LMUSRID, " +
+                    "@PRCSDATE=@PRCSDATE";
+
+                db.Database.ExecuteSqlCommand(
+                    sql,
+                    new SqlParameter("@STKBID", stkBid),
+                    new SqlParameter("@TRANREFID", tranRefId),
+                    new SqlParameter("@TRANREFNAME", tranRefName),
+                    new SqlParameter("@TRANDREFGID", trandRefGid),
+                    new SqlParameter("@MTRLGID", ToDbValue(mtrlGid)),
+                    new SqlParameter("@TRANDREFID", ToDbValue(trandRefId)),
+                    new SqlParameter("@MTRLGDESC", ToDbValue(mtrlGDesc)),
+                    new SqlParameter("@MTRLDESC", ToDbValue(mtrlDesc)),
+                    new SqlParameter("@DACHEADID", dacheadId),
+                    new SqlParameter("@PACKMID", packMid),
+                    new SqlParameter("@BATCHNO", batchNo ?? string.Empty),
+                    new SqlParameter("@STKEDATE", stkeDate),
+                    new SqlParameter("@MTRLSTKQTY", ToDbValue(mtrlStkQty)),
+                    new SqlParameter("@STKPRATE", stkPrate),
+                    new SqlParameter("@STKMRP", stkMrp),
+                    new SqlParameter("@ASTKSRATE", astkSRate),
+                    new SqlParameter("@HSNID", hsnId),
+                    new SqlParameter("@TRANBCGSTEXPRN", cgstExprn),
+                    new SqlParameter("@TRANBSGSTEXPRN", sgstExprn),
+                    new SqlParameter("@TRANBIGSTEXPRN", igstExprn),
+                    new SqlParameter("@TRANBCGSTAMT", cgstAmt),
+                    new SqlParameter("@TRANBSGSTAMT", sgstAmt),
+                    new SqlParameter("@TRANBIGSTAMT", igstAmt),
+                    new SqlParameter("@CLVALUE", ToDbValue(clValue)),
+                    new SqlParameter("@CURRENTBATCH", ToDbValue(currentBatch)),
+                    new SqlParameter("@PHYQTY", phyQty.Value),
+                    new SqlParameter("@CUSRID", ToDbValue(userId)),
+                    new SqlParameter("@LMUSRID", ToDbValue(userId)),
+                    new SqlParameter("@PRCSDATE", prcsDate));
 
                 TempData["SuccessMessage"] = "Saved Successfully";
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                LoadMaterialGroups(materialGroupId);
-                LoadMaterialsByGroup(materialGroupId, mtrlid);
+                LoadAllMaterials(mtrlid);
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
                 ViewBag.ErrorMessage = ex.Message;
                 return View();
             }

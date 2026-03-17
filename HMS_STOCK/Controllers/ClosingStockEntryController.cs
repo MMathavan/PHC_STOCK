@@ -106,7 +106,7 @@ namespace HMS_STOCK.Controllers
                 int endRowNum = start + length;
 
                 int totalCount = db.Database.SqlQuery<int>(
-                    "SELECT COUNT(*) FROM StockMaster_2526").FirstOrDefault();
+                    "SELECT COUNT(*) FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0").FirstOrDefault();
 
                 int filteredCount = totalCount;
                 List<StockMaster_2526> stockData;
@@ -116,7 +116,7 @@ namespace HMS_STOCK.Controllers
 
                 if (hasMaterialFilter)
                 {
-                    string where = "WHERE MTRLGID = @p0";
+                    string where = "WHERE ISNULL(STKBID, 0) <> 0 AND MTRLGID = @p0";
                     if (hasSearch)
                     {
                         where += " AND (MTRLDESC LIKE @p1 OR BATCHNO LIKE @p1 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p1)";
@@ -147,7 +147,7 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -155,13 +155,13 @@ namespace HMS_STOCK.Controllers
 
                     filteredCount = db.Database.SqlQuery<int>(
                         @"SELECT COUNT(*) FROM StockMaster_2526
-                          WHERE MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0",
+                          WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)",
                         "%" + searchValue + "%").FirstOrDefault();
                 }
                 else
                 {
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 

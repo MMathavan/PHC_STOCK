@@ -74,9 +74,55 @@
 
     .form-actions-row {
         display: flex;
-        justify-content: flex-end;
+        justify-content: space-between;
         gap: 10px;
         margin-top: 20px;
+    }
+
+    .field-error {
+        color: #dc3545;
+        font-size: 12px;
+        margin-top: 6px;
+        display: none;
+    }
+
+    .has-error {
+        border-color: #dc3545 !important;
+    }
+
+    .field-card {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 10px;
+        padding: 16px;
+        border: 1px solid #dee2e6;
+        margin-top: 16px;
+    }
+
+    .field-card-title {
+        font-weight: 700;
+        font-size: 13px;
+        color: #495057;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .readonly-input {
+        background: #ffffff;
+        border: 1px solid #ced4da;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        width: 100%;
+    }
+
+    .readonly-input:focus {
+        outline: none;
+        box-shadow: none;
+        border-color: #ced4da;
     }
 </style>
 
@@ -88,14 +134,19 @@
     <div class="content-wrapper">
         <div class="page-header-bar">
             <h3 class="page-title">
-                <i class="bi bi-vector-pen"></i> Manual Stock Entry - Add
+                <i class="bi bi-vector-pen"></i> Manual Stock Entry - @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add")
             </h3>
         </div>
 
         <div class="form-container">
-            @using (Html.BeginForm("Add", "DirectManualEntry", FormMethod.Post))
+            @using (Html.BeginForm(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add", "DirectManualEntry", FormMethod.Post))
             {
                 @Html.AntiForgeryToken()
+
+                if (ViewBag.IsEdit != null && (bool)ViewBag.IsEdit)
+                {
+                    <input type="hidden" name="SID" value="@ViewBag.SID" />
+                }
 
                 if (ViewBag.ErrorMessage != null)
                 {
@@ -105,21 +156,66 @@
                 <div class="row">
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="materialGroupId" class="form-label">Material Group</label>
-                            @Html.DropDownList("materialGroupId", (SelectList)ViewBag.MaterialGroups, "-- Select Material Group --", new { @class = "form-control", id = "materialGroupId" })
+                            <label for="mtrlid" class="form-label">Material</label>
+                            @Html.DropDownList("mtrlid", (SelectList)ViewBag.Materials, "-- Select Material --", new { @class = "form-control", id = "mtrlid" })
+                            <div id="mtrlid_error" class="field-error">Please select a Material.</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
-                            <label for="mtrlid" class="form-label">Material</label>
-                            @Html.DropDownList("mtrlid", (SelectList)ViewBag.Materials, "-- Select Material --", new { @class = "form-control", id = "mtrlid" })
+                            <label for="materialGroupName" class="form-label">Material Group</label>
+                            <input type="text" id="materialGroupName" class="readonly-input" readonly />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="currentBatch" class="form-label">Current Batch</label>
+                            <input type="text" id="currentBatch" name="currentBatch" class="form-control" autocomplete="off" value="@(ViewBag.CurrentBatch ?? string.Empty)" @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "readonly=\"readonly\"" : "") />
+                            <div id="currentBatch_error" class="field-error">Please enter Current Batch.</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="phyQty" class="form-label">Physical Quantity</label>
+                            <input type="number" id="phyQty" name="phyQty" class="form-control" step="0.01" autocomplete="off" value="@(ViewBag.PhyQty ?? string.Empty)" @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "readonly=\"readonly\"" : "") />
+                            <div id="phyQty_error" class="field-error">Please enter Physical Quantity.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="expiryDate" class="form-label">Expiry Date</label>
+                            <input type="date" id="expiryDate" name="expiryDate" class="form-control" value="@(ViewBag.ExpiryDate ?? string.Empty)" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="field-card">
+                            <div class="field-card-title"><i class="fa fa-database"></i> Opening Supplier HSN Details</div>
+                            <div id="openingFields" class="row"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="field-card">
+                            <div class="field-card-title"><i class="fa fa-database"></i> Material HSN Details</div>
+                            <div id="materialFields" class="row"></div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-actions-row">
                     <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">Back</a>
-                    <button type="submit" class="btn btn-primary">Save</button>
+                    <button type="submit" class="btn btn-primary" id="btnSave">@(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Update" : "Save")</button>
                 </div>
             }
         </div>
@@ -130,17 +226,49 @@
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function () {
-            var $group = $('#materialGroupId');
             var $mtrl = $('#mtrlid');
+            var $groupName = $('#materialGroupName');
+            var $currentBatch = $('#currentBatch');
+            var $phyQty = $('#phyQty');
+            var isEdit = @((ViewBag.IsEdit != null && (bool)ViewBag.IsEdit) ? "true" : "false");
+
+            function setError($el, errorId, hasError) {
+                if (hasError) {
+                    $el.addClass('has-error');
+                    $('#' + errorId).show();
+                } else {
+                    $el.removeClass('has-error');
+                    $('#' + errorId).hide();
+                }
+            }
+
+            function validateForm() {
+                var ok = true;
+
+                var mtrlVal = $mtrl.val();
+                var hasMtrl = !!mtrlVal && parseInt(mtrlVal, 10) > 0;
+                setError($mtrl.next('.select2').length ? $mtrl.next('.select2').find('.select2-selection') : $mtrl, 'mtrlid_error', !hasMtrl);
+                if (!hasMtrl) ok = false;
+
+                if (!isEdit) {
+                    var cb = ($currentBatch.val() || '').trim();
+                    setError($currentBatch, 'currentBatch_error', cb.length === 0);
+                    if (cb.length === 0) ok = false;
+
+                    var pq = ($phyQty.val() || '').trim();
+                    var pqNum = pq.length ? Number(pq) : NaN;
+                    var pqInvalid = pq.length === 0 || isNaN(pqNum);
+                    setError($phyQty, 'phyQty_error', pqInvalid);
+                    if (pqInvalid) ok = false;
+                } else {
+                    setError($currentBatch, 'currentBatch_error', false);
+                    setError($phyQty, 'phyQty_error', false);
+                }
+
+                return ok;
+            }
 
             if ($.fn.select2) {
-                $group.select2({
-                    placeholder: '-- Select Material Group --',
-                    allowClear: true,
-                    minimumResultsForSearch: 0,
-                    width: '100%'
-                });
-
                 $mtrl.select2({
                     placeholder: '-- Select Material --',
                     allowClear: true,
@@ -149,31 +277,115 @@
                 });
             }
 
-            function resetMaterials() {
-                $mtrl.empty();
-                $mtrl.append($('<option></option>').val('').text('-- Select Material --'));
-                $mtrl.val('').trigger('change');
+            function escapeHtml(s) {
+                return String(s)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
             }
 
-            $group.on('change', function () {
-                var gid = $(this).val();
-                resetMaterials();
+            function formatDateValue(v) {
+                if (v === null || v === undefined) return '';
 
-                if (!gid) return;
+                if (Object.prototype.toString.call(v) === '[object Date]' && !isNaN(v.getTime())) {
+                    var yyyy = v.getFullYear();
+                    var mm = String(v.getMonth() + 1).padStart(2, '0');
+                    var dd = String(v.getDate()).padStart(2, '0');
+                    return yyyy + '-' + mm + '-' + dd;
+                }
+
+                var s = String(v);
+                var m = /\/Date\((-?\d+)\)\//.exec(s);
+                if (m && m[1]) {
+                    var ms = parseInt(m[1], 10);
+                    if (!isNaN(ms)) {
+                        return formatDateValue(new Date(ms));
+                    }
+                }
+
+                return s;
+            }
+
+            function renderFields(containerId, dataObj) {
+                var $c = $('#' + containerId);
+                $c.empty();
+                if (!dataObj) return;
+
+                var keys = Object.keys(dataObj);
+                if (!keys.length) {
+                    $c.append('<div class="col-12" style="color:#6c757d;font-size:13px;">No data found</div>');
+                    return;
+                }
+
+                for (var i = 0; i < keys.length; i++) {
+                    var k = keys[i];
+                    var v = dataObj[k];
+                    var safeK = escapeHtml(k);
+                    var displayV = (v === null || v === undefined) ? '' : v;
+                    if (k && String(k).toUpperCase().indexOf('DATE') >= 0) {
+                        displayV = formatDateValue(displayV);
+                    } else if (typeof displayV === 'string' && /\/Date\((-?\d+)\)\//.test(displayV)) {
+                        displayV = formatDateValue(displayV);
+                    }
+                    var safeV = (displayV === null || displayV === undefined) ? '' : escapeHtml(displayV);
+                    var html = '';
+                    html += '<div class="col-md-4" style="margin-bottom:12px;">';
+                    html += '  <label class="form-label" style="margin-bottom:6px;font-size:12px;">' + safeK + '</label>';
+                    html += '  <input type="text" class="readonly-input" readonly value="' + safeV + '" />';
+                    html += '</div>';
+                    $c.append(html);
+                }
+            }
+
+            function clearDetails() {
+                $('#openingFields').empty();
+                $('#materialFields').empty();
+                $groupName.val('');
+            }
+
+            function loadDetails(mtrlid) {
+                clearDetails();
+                if (!mtrlid) return;
 
                 $.ajax({
-                    url: '@Url.Action("GetMaterialsByGroup", "DirectManualEntry")',
+                    url: '@Url.Action("GetMaterialDetails", "DirectManualEntry")',
                     type: 'GET',
-                    data: { materialGroupId: gid },
-                    success: function (data) {
-                        if (!data || !data.length) return;
-                        for (var i = 0; i < data.length; i++) {
-                            $mtrl.append($('<option></option>').val(data[i].id).text(data[i].text));
+                    data: { mtrlid: mtrlid },
+                    success: function (res) {
+                        if (!res || !res.ok) return;
+                        if (res.group && res.group.MTRLGDESC) {
+                            $groupName.val(res.group.MTRLGDESC);
+                        } else {
+                            $groupName.val('');
                         }
-                        $mtrl.trigger('change');
+                        renderFields('openingFields', res.opening);
+                        renderFields('materialFields', res.material);
                     }
                 });
+            }
+
+            $mtrl.on('change', function () {
+                loadDetails($(this).val());
+                validateForm();
             });
+
+            $currentBatch.on('input', function () { validateForm(); });
+            $phyQty.on('input', function () { validateForm(); });
+
+            $('form').on('submit', function (e) {
+                if (!validateForm()) {
+                    e.preventDefault();
+                }
+            });
+
+            var initialMtrl = $mtrl.val();
+            if (initialMtrl && parseInt(initialMtrl, 10) > 0) {
+                loadDetails(initialMtrl);
+            } else {
+                clearDetails();
+            }
         });
     </script>
 }

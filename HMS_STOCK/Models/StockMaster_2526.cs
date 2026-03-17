@@ -7,9 +7,13 @@ namespace HMS_STOCK.Models
     [Table("StockMaster_2526")]
     public class StockMaster_2526
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        public int SID { get; set; }
+
         public int? STKBID { get; set; }
 
-        [Key]
+        [Required]
         public int TRANREFID { get; set; }
 
         [Required]
