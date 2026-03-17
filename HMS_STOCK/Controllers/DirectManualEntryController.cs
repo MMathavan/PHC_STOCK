@@ -243,6 +243,30 @@ namespace HMS_STOCK.Controllers
                 return View("Add");
             }
 
+            if (string.IsNullOrWhiteSpace(currentBatch))
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.IsEdit = true;
+                ViewBag.SID = SID;
+                ViewBag.CurrentBatch = currentBatch;
+                ViewBag.PhyQty = phyQty;
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = "Please enter Current Batch.";
+                return View("Add");
+            }
+
+            if (!phyQty.HasValue)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.IsEdit = true;
+                ViewBag.SID = SID;
+                ViewBag.CurrentBatch = currentBatch;
+                ViewBag.PhyQty = phyQty;
+                ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                ViewBag.ErrorMessage = "Please enter Physical Quantity.";
+                return View("Add");
+            }
+
             if (!expiryDate.HasValue)
             {
                 LoadAllMaterials(mtrlid);
@@ -265,11 +289,19 @@ namespace HMS_STOCK.Controllers
 UPDATE StockMaster_2526
 SET
     TRANDREFID = @p0,
-    STKEDATE = @p1,
-    LMUSRID = @p2,
-    PRCSDATE = @p3
-WHERE SID = @p4",
+    CURRENTBATCH = @p1,
+    PHYQTY = @p2,
+    BATCHNO = @p3,
+    MTRLSTKQTY = @p4,
+    STKEDATE = @p5,
+    LMUSRID = @p6,
+    PRCSDATE = @p7
+WHERE SID = @p8",
                     mtrlid.Value,
+                    ToDbValue(currentBatch),
+                    ToDbValue(phyQty.Value),
+                    ToDbValue(currentBatch),
+                    ToDbValue(phyQty.Value),
                     newExpiry,
                     ToDbValue(userId),
                     prcsDate,

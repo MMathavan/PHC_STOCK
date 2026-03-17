@@ -210,14 +210,14 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="currentBatch" class="form-label">Current Batch</label>
-                            <input type="text" id="currentBatch" name="currentBatch" class="form-control" autocomplete="off" value="@(ViewBag.CurrentBatch ?? string.Empty)" @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "readonly=\"readonly\"" : "") />
+                            <input type="text" id="currentBatch" name="currentBatch" class="form-control" autocomplete="off" value="@(ViewBag.CurrentBatch ?? string.Empty)" />
                             <div id="currentBatch_error" class="field-error">Please enter Current Batch.</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="phyQty" class="form-label">Physical Quantity</label>
-                            <input type="number" id="phyQty" name="phyQty" class="form-control" step="0.01" autocomplete="off" value="@(ViewBag.PhyQty ?? string.Empty)" @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "readonly=\"readonly\"" : "") />
+                            <input type="number" id="phyQty" name="phyQty" class="form-control" step="0.01" autocomplete="off" value="@(ViewBag.PhyQty ?? string.Empty)" />
                             <div id="phyQty_error" class="field-error">Please enter Physical Quantity.</div>
                         </div>
                     </div>
@@ -291,20 +291,15 @@
                 setError($mtrl.next('.select2').length ? $mtrl.next('.select2').find('.select2-selection') : $mtrl, 'mtrlid_error', !hasMtrl);
                 if (!hasMtrl) ok = false;
 
-                if (!isEdit) {
-                    var cb = ($currentBatch.val() || '').trim();
-                    setError($currentBatch, 'currentBatch_error', cb.length === 0);
-                    if (cb.length === 0) ok = false;
+                var cb = ($currentBatch.val() || '').trim();
+                setError($currentBatch, 'currentBatch_error', cb.length === 0);
+                if (cb.length === 0) ok = false;
 
-                    var pq = ($phyQty.val() || '').trim();
-                    var pqNum = pq.length ? Number(pq) : NaN;
-                    var pqInvalid = pq.length === 0 || isNaN(pqNum);
-                    setError($phyQty, 'phyQty_error', pqInvalid);
-                    if (pqInvalid) ok = false;
-                } else {
-                    setError($currentBatch, 'currentBatch_error', false);
-                    setError($phyQty, 'phyQty_error', false);
-                }
+                var pq = ($phyQty.val() || '').trim();
+                var pqNum = pq.length ? Number(pq) : NaN;
+                var pqInvalid = pq.length === 0 || isNaN(pqNum);
+                setError($phyQty, 'phyQty_error', pqInvalid);
+                if (pqInvalid) ok = false;
 
                 var exp = ($expiryDate.val() || '').trim();
                 setError($expiryDate, 'expiryDate_error', exp.length === 0);
