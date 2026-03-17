@@ -124,6 +124,43 @@
         box-shadow: none;
         border-color: #ced4da;
     }
+
+    .swal-small-popup {
+        width: 420px !important;
+        padding: 18px 18px 14px 18px !important;
+        border-radius: 12px !important;
+    }
+
+    .swal-small-title {
+        font-size: 22px !important;
+        margin-top: 6px !important;
+    }
+
+    .swal-small-actions {
+        gap: 10px !important;
+    }
+
+    .swal-small-confirm {
+        background: #5a67d8 !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 8px 14px !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        min-width: 96px;
+    }
+
+    .swal-small-cancel {
+        background: #6c757d !important;
+        color: #fff !important;
+        border: none !important;
+        border-radius: 8px !important;
+        padding: 8px 14px !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        min-width: 96px;
+    }
 </style>
 
 @section Styles {
@@ -224,6 +261,7 @@
 </div>
 
 @section scripts {
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         $(document).ready(function () {
@@ -233,6 +271,7 @@
             var $phyQty = $('#phyQty');
             var $expiryDate = $('#expiryDate');
             var isEdit = @((ViewBag.IsEdit != null && (bool)ViewBag.IsEdit) ? "true" : "false");
+            var isSubmitting = false;
 
             function setError($el, errorId, hasError) {
                 if (hasError) {
@@ -382,8 +421,45 @@
             $expiryDate.on('change', function () { validateForm(); });
 
             $('form').on('submit', function (e) {
+                if (isSubmitting) {
+                    return;
+                }
+
                 if (!validateForm()) {
                     e.preventDefault();
+                    return;
+                }
+
+                if (window.Swal && Swal.fire) {
+                    e.preventDefault();
+
+                    var title = isEdit ? 'Update this entry?' : 'Save this entry?';
+                    var confirmText = isEdit ? 'Yes, Update' : 'Yes, Save';
+
+                    Swal.fire({
+                        icon: 'question',
+                        title: title,
+                        showCancelButton: true,
+                        confirmButtonText: confirmText,
+                        cancelButtonText: 'Cancel',
+                        width: 420,
+                        buttonsStyling: false,
+                        customClass: {
+                            popup: 'swal-small-popup',
+                            title: 'swal-small-title',
+                            actions: 'swal-small-actions',
+                            confirmButton: 'swal-small-confirm',
+                            cancelButton: 'swal-small-cancel'
+                        }
+                    }).then(function (result) {
+                        if (result && result.isConfirmed) {
+                            isSubmitting = true;
+                            try {
+                                $('#btnSave').prop('disabled', true);
+                            } catch (ex) { }
+                            e.target.submit();
+                        }
+                    });
                 }
             });
 
