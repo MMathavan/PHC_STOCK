@@ -217,7 +217,11 @@ namespace HMS_STOCK.Controllers
                 return HttpNotFound();
             }
 
-            LoadAllMaterials(row.TRANREFID);
+            int selectedMtrlId = (row.TRANDREFID.HasValue && row.TRANDREFID.Value > 0)
+                ? row.TRANDREFID.Value
+                : row.TRANREFID;
+
+            LoadAllMaterials(selectedMtrlId);
             ViewBag.IsEdit = true;
             ViewBag.SID = row.SID;
             ViewBag.CurrentBatch = row.CURRENTBATCH;
