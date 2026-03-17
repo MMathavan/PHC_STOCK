@@ -239,19 +239,33 @@ namespace HMS_STOCK.Controllers
                 return View("Add");
             }
 
+            if (!expiryDate.HasValue)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.IsEdit = true;
+                ViewBag.SID = SID;
+                ViewBag.CurrentBatch = currentBatch;
+                ViewBag.PhyQty = phyQty;
+                ViewBag.ExpiryDate = string.Empty;
+                ViewBag.ErrorMessage = "Please select Expiry Date.";
+                return View("Add");
+            }
+
             try
             {
                 string userId = GetCurrentUserId();
                 DateTime prcsDate = DateTime.Now;
-                DateTime newExpiry = expiryDate ?? DateTime.Now;
+                DateTime newExpiry = expiryDate.Value;
 
                 db.Database.ExecuteSqlCommand(@"
 UPDATE StockMaster_2526
 SET
-    STKEDATE = @p0,
-    LMUSRID = @p1,
-    PRCSDATE = @p2
-WHERE SID = @p3",
+    TRANDREFID = @p0,
+    STKEDATE = @p1,
+    LMUSRID = @p2,
+    PRCSDATE = @p3
+WHERE SID = @p4",
+                    mtrlid.Value,
                     newExpiry,
                     ToDbValue(userId),
                     prcsDate,
@@ -409,6 +423,14 @@ WHERE SID = @p3",
                 return View();
             }
 
+            if (!expiryDate.HasValue)
+            {
+                LoadAllMaterials(mtrlid);
+                ViewBag.ExpiryDate = string.Empty;
+                ViewBag.ErrorMessage = "Please select Expiry Date.";
+                return View();
+            }
+
             try
             {
                 var opening = GetTop1RowAsDictionary("Z_OPENING_SUPPLIER_HSN_DETAIL_ASSGN_001", mtrlid.Value);
@@ -425,17 +447,26 @@ WHERE SID = @p3",
                     mtrlid.Value).FirstOrDefault();
 
                 int stkBid = 0;
-                int tranRefId = mtrlid.Value;
-                string tranRefName = GetDictValue<string>(opening, "TRANREFNAME", null) ?? (mm != null ? mm.MTRLDESC : null) ?? string.Empty;
+                int tranRefId = GetDictValue<int>(opening, "TRANREFID", 0);
+                string tranRefName = GetDictValue<string>(opening, "TRANREFNAME", null);
+
+                if (tranRefId <= 0 || string.IsNullOrWhiteSpace(tranRefName))
+                {
+                    LoadAllMaterials(mtrlid);
+                    ViewBag.ExpiryDate = expiryDate.HasValue ? expiryDate.Value.ToString("yyyy-MM-dd") : string.Empty;
+                    ViewBag.ErrorMessage = "Supplier not found for selected Material (TRANREFID/TRANREFNAME missing).";
+                    return View();
+                }
+
                 int? mtrlGid = group != null ? (int?)group.MTRLGID : GetDictValue<int?>(opening, "MTRLGID", null);
                 int trandRefGid = mtrlGid.HasValue ? mtrlGid.Value : 0;
-                int? trandRefId = GetDictValue<int?>(opening, "TRANDREFID", null);
+                int? trandRefId = mtrlid.Value;
                 string mtrlGDesc = group != null ? group.MTRLGDESC : GetDictValue<string>(opening, "MTRLGDESC", null);
                 string mtrlDesc = (mm != null ? mm.MTRLDESC : null) ?? GetDictValue<string>(opening, "TRANDREFNAME", null) ?? GetDictValue<string>(opening, "MTRLDESC", null);
                 int dacheadId = 44;
                 int packMid = 2;
                 string batchNo = currentBatch;
-                DateTime stkeDate = expiryDate ?? DateTime.Now;
+                DateTime stkeDate = expiryDate.Value;
                 decimal? mtrlStkQty = phyQty;
                 decimal stkPrate = GetDictValue<decimal>(opening, "STKPRATE", 0m);
                 decimal stkMrp = GetDictValue<decimal>(opening, "STKMRP", 0m);

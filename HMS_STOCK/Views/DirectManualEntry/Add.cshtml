@@ -191,6 +191,7 @@
                         <div class="form-group">
                             <label for="expiryDate" class="form-label">Expiry Date</label>
                             <input type="date" id="expiryDate" name="expiryDate" class="form-control" value="@(ViewBag.ExpiryDate ?? string.Empty)" />
+                            <div id="expiryDate_error" class="field-error">Please select Expiry Date.</div>
                         </div>
                     </div>
                 </div>
@@ -230,6 +231,7 @@
             var $groupName = $('#materialGroupName');
             var $currentBatch = $('#currentBatch');
             var $phyQty = $('#phyQty');
+            var $expiryDate = $('#expiryDate');
             var isEdit = @((ViewBag.IsEdit != null && (bool)ViewBag.IsEdit) ? "true" : "false");
 
             function setError($el, errorId, hasError) {
@@ -264,6 +266,10 @@
                     setError($currentBatch, 'currentBatch_error', false);
                     setError($phyQty, 'phyQty_error', false);
                 }
+
+                var exp = ($expiryDate.val() || '').trim();
+                setError($expiryDate, 'expiryDate_error', exp.length === 0);
+                if (exp.length === 0) ok = false;
 
                 return ok;
             }
@@ -373,6 +379,7 @@
 
             $currentBatch.on('input', function () { validateForm(); });
             $phyQty.on('input', function () { validateForm(); });
+            $expiryDate.on('change', function () { validateForm(); });
 
             $('form').on('submit', function (e) {
                 if (!validateForm()) {
