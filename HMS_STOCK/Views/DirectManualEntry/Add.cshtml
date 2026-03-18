@@ -252,8 +252,19 @@
                 </div>
 
                 <div class="form-actions-row">
-                    <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">Back</a>
-                    <button type="submit" class="btn btn-primary" id="btnSave">@(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Update" : "Save")</button>
+                    <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">
+                        <i class="fa fa-arrow-left"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="btnSave">
+                        @if (ViewBag.IsEdit != null && (bool)ViewBag.IsEdit)
+                        {
+                            <i class="fa fa-save"></i><text> Update</text>
+                        }
+                        else
+                        {
+                            <i class="fa fa-save"></i><text> Save</text>
+                        }
+                    </button>
                 </div>
             }
         </div>
