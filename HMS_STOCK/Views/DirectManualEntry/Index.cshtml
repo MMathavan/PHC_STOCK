@@ -189,6 +189,17 @@
 </div>
 
 @section Scripts {
+    <style>
+        .dme-swal-actions-gap {
+            display: flex !important;
+            justify-content: center !important;
+            gap: 10px !important;
+        }
+
+        .dme-swal-actions-gap .swal2-styled {
+            margin: 0 !important;
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         $(document).ready(function () {
@@ -268,24 +279,77 @@
             $('#manualEntryTable').on('click', '.btn-delete', function () {
                 var sid = $(this).data('id');
                 if (!sid) return;
-                if (!confirm('Are you sure you want to delete this record?')) return;
 
-                $.ajax({
-                    url: '@Url.Action("Delete", "DirectManualEntry")',
-                    type: 'POST',
-                    data: { id: sid },
-                    success: function (res) {
-                        if (res && res.ok) {
-                            table.ajax.reload(null, false);
-                        } else {
-                            alert(res && res.message ? res.message : 'Delete failed');
+                if (window.Swal && Swal.fire) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Delete this record?',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, Delete',
+                        cancelButtonText: 'Cancel',
+                        width: 420,
+                        buttonsStyling: false,
+                        customClass: {
+                            actions: 'dme-swal-actions-gap'
                         }
-                    },
-                    error: function (xhr) {
-                        var msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Delete failed';
-                        alert(msg);
-                    }
-                });
+                    }).then(function (result) {
+                        if (!result || !result.isConfirmed) return;
+
+                        $.ajax({
+                            url: '@Url.Action("Delete", "DirectManualEntry")',
+                            type: 'POST',
+                            data: { id: sid },
+                            success: function (res) {
+                                if (res && res.ok) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: (res && res.message) ? res.message : 'Deleted Successfully',
+                                        showConfirmButton: false,
+                                        timer: 1500,
+                                        width: 420,
+                                        buttonsStyling: false
+                                    });
+                                    table.ajax.reload(null, false);
+                                } else {
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: (res && res.message) ? res.message : 'Delete failed',
+                                        width: 420,
+                                        buttonsStyling: false
+                                    });
+                                }
+                            },
+                            error: function (xhr) {
+                                var msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Delete failed';
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: msg,
+                                    width: 420,
+                                    buttonsStyling: false
+                                });
+                            }
+                        });
+                    });
+                } else {
+                    if (!confirm('Are you sure you want to delete this record?')) return;
+
+                    $.ajax({
+                        url: '@Url.Action("Delete", "DirectManualEntry")',
+                        type: 'POST',
+                        data: { id: sid },
+                        success: function (res) {
+                            if (res && res.ok) {
+                                table.ajax.reload(null, false);
+                            } else {
+                                alert(res && res.message ? res.message : 'Delete failed');
+                            }
+                        },
+                        error: function (xhr) {
+                            var msg = (xhr && xhr.responseJSON && xhr.responseJSON.message) ? xhr.responseJSON.message : 'Delete failed';
+                            alert(msg);
+                        }
+                    });
+                }
             });
         });
     </script>
