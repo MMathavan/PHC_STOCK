@@ -84,7 +84,8 @@ namespace HMS_STOCK.Controllers
                             BATCHNO AS CURRENTBATCHNO,
                             MTRLSTKQTY AS PHYQTY
                         FROM StockMaster_2526
-                        WHERE MTRLGID = @p0
+                        WHERE ISNULL(STKBID, 0) <> 0
+                          AND MTRLGID = @p0
                           AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) >= @p1
                           AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) <= @p2
                         ORDER BY MTRLDESC, BATCHNO, STKEDATE",
@@ -101,7 +102,8 @@ namespace HMS_STOCK.Controllers
                             BATCHNO AS CURRENTBATCHNO,
                             MTRLSTKQTY AS PHYQTY
                         FROM StockMaster_2526
-                        WHERE MTRLGID = @p0
+                        WHERE ISNULL(STKBID, 0) <> 0
+                          AND MTRLGID = @p0
                         ORDER BY MTRLDESC, BATCHNO, STKEDATE",
                         materialGroupId)
                     .ToList();
