@@ -1,9 +1,12 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Linq;
 using System.Web.Mvc;
 using HMS_STOCK.Models;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
 namespace HMS_STOCK.Controllers
 {
@@ -47,6 +50,177 @@ namespace HMS_STOCK.Controllers
             ViewBag.ClosingStockEntrySearch = Session != null ? (Session["ClosingStockEntrySearch"] ?? string.Empty) : string.Empty;
 
             return View(new List<StockMaster_2526>());
+        }
+
+        [HttpGet]
+        public ActionResult DownloadPdf(int? materialGroupId, string search)
+        {
+            try
+            {
+                bool hasMaterialFilter = materialGroupId.HasValue && materialGroupId.Value > 0;
+                bool hasSearch = !string.IsNullOrWhiteSpace(search);
+
+                string where = "WHERE ISNULL(STKBID, 0) <> 0";
+                var parameters = new List<object>();
+
+                if (hasMaterialFilter)
+                {
+                    where += " AND MTRLGID = @p0";
+                    parameters.Add(materialGroupId.Value);
+                }
+
+                if (hasSearch)
+                {
+                    var idx = parameters.Count;
+                    where += " AND (MTRLDESC LIKE @p" + idx + " OR BATCHNO LIKE @p" + idx + " OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p" + idx + ")";
+                    parameters.Add("%" + search.Trim() + "%");
+                }
+
+                var query = @"SELECT
+                        STKBID,
+                        TRANREFID,
+                        TRANREFNAME,
+                        TRANDREFGID,
+                        MTRLGID,
+                        TRANDREFID,
+                        MTRLGDESC,
+                        MTRLDESC,
+                        DACHEADID,
+                        PACKMID,
+                        BATCHNO,
+                        STKEDATE,
+                        MTRLSTKQTY,
+                        STKPRATE,
+                        STKMRP,
+                        ASTKSRATE,
+                        HSNID,
+                        TRANBCGSTEXPRN,
+                        TRANBSGSTEXPRN,
+                        TRANBIGSTEXPRN,
+                        TRANBCGSTAMT,
+                        TRANBSGSTAMT,
+                        TRANBIGSTAMT,
+                        CLVALUE
+                    FROM StockMaster_2526 " + where + @"
+                    ORDER BY MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE";
+
+                var rows = db.Database.SqlQuery<StockMaster_2526>(query, parameters.ToArray()).ToList();
+                var pdfBytes = BuildClosingStockEntryPdf(rows);
+                return File(pdfBytes, "application/pdf", "CLOSING_STOCK_2026-2027.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index", new { materialGroupId = materialGroupId });
+            }
+        }
+
+        private static byte[] BuildClosingStockEntryPdf(List<StockMaster_2526> rows)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var pageSize = PageSize.A4.Rotate();
+                using (var document = new Document(pageSize, 16f, 16f, 22f, 22f))
+                {
+                    PdfWriter.GetInstance(document, ms);
+                    document.Open();
+
+                    var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
+                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 6.5f, BaseColor.WHITE);
+                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 6.5f, BaseColor.BLACK);
+
+                    var title = new Paragraph("CLOSING STOCK 2026 - 2027", fontTitle)
+                    {
+                        Alignment = Element.ALIGN_CENTER,
+                        SpacingAfter = 8f
+                    };
+                    document.Add(title);
+
+                    var headers = new string[]
+                    {
+                        "STKBID","TRANREFID","TRANREFNAME","TRANDREFGID","MTRLGID","TRANDREFID",
+                        "MTRLGDESC","MTRLDESC","DACHEADID","PACKMID","BATCHNO","STKEDATE",
+                        "MTRLSTKQTY","STKPRATE","STKMRP","ASTKSRATE","HSNID","TRANBCGSTEXPRN",
+                        "TRANBSGSTEXPRN","TRANBIGSTEXPRN","TRANBCGSTAMT","TRANBSGSTAMT","TRANBIGSTAMT","CLVALUE"
+                    };
+
+                    var table = new PdfPTable(headers.Length)
+                    {
+                        WidthPercentage = 100,
+                        SplitLate = false
+                    };
+                    table.HeaderRows = 1;
+
+                    var headerBg = new BaseColor(46, 180, 255);
+                    for (int i = 0; i < headers.Length; i++)
+                    {
+                        table.AddCell(new PdfPCell(new Phrase(headers[i], fontHeader))
+                        {
+                            BackgroundColor = headerBg,
+                            HorizontalAlignment = Element.ALIGN_CENTER,
+                            VerticalAlignment = Element.ALIGN_MIDDLE,
+                            Padding = 3f,
+                            BorderWidth = 0.5f,
+                            NoWrap = false
+                        });
+                    }
+
+                    if (rows == null) rows = new List<StockMaster_2526>();
+                    if (rows.Count == 0)
+                    {
+                        for (int i = 0; i < headers.Length; i++)
+                        {
+                            table.AddCell(new PdfPCell(new Phrase(string.Empty, fontCell)) { Padding = 3f, BorderWidth = 0.4f });
+                        }
+                    }
+                    else
+                    {
+                        foreach (var r in rows)
+                        {
+                            table.AddCell(MakeCell(r.STKBID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANREFID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANREFNAME, fontCell));
+                            table.AddCell(MakeCell(r.TRANDREFGID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.MTRLGID?.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANDREFID?.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.MTRLGDESC, fontCell));
+                            table.AddCell(MakeCell(r.MTRLDESC, fontCell));
+                            table.AddCell(MakeCell(r.DACHEADID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.PACKMID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.BATCHNO, fontCell));
+                            table.AddCell(MakeCell(r.STKEDATE.ToString("yyyy-MM-dd"), fontCell));
+                            table.AddCell(MakeCell(r.MTRLSTKQTY?.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.STKPRATE.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.STKMRP.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.ASTKSRATE.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.HSNID.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBCGSTEXPRN.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBSGSTEXPRN.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBIGSTEXPRN.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBCGSTAMT.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBSGSTAMT.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.TRANBIGSTAMT.ToString(), fontCell));
+                            table.AddCell(MakeCell(r.CLVALUE?.ToString(), fontCell));
+                        }
+                    }
+
+                    document.Add(table);
+                    document.Close();
+                }
+                return ms.ToArray();
+            }
+        }
+
+        private static PdfPCell MakeCell(string text, Font font)
+        {
+            return new PdfPCell(new Phrase(text ?? string.Empty, font))
+            {
+                HorizontalAlignment = Element.ALIGN_CENTER,
+                VerticalAlignment = Element.ALIGN_MIDDLE,
+                Padding = 3f,
+                BorderWidth = 0.4f,
+                NoWrap = false
+            };
         }
 
         [HttpPost]

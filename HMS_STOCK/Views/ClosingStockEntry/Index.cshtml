@@ -42,6 +42,27 @@
         gap: 10px;
     }
 
+    .btn-download-pdf {
+        background: rgba(211, 47, 47, 0.95);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-download-pdf:hover,
+    .btn-download-pdf:focus {
+        color: #fff;
+        text-decoration: none;
+        background: rgba(183, 28, 28, 0.98);
+    }
+
     .header-title {
         font-size: 28px;
         font-weight: 600;
@@ -414,6 +435,10 @@
             <h3 class="page-title">
                 <i class="fa fa-stop-circle"></i> Closing Stock
             </h3>
+            <a id="btnDownloadClosingStockPdf" class="btn-download-pdf" href="@Url.Action("DownloadPdf", "ClosingStockEntry")">
+                <i class="fa fa-file-pdf-o"></i>
+                Download as PDF
+            </a>
         </div>
         <div class="table-container">
             <div class="summary-section" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
@@ -593,6 +618,14 @@
                     zeroRecords: "No matching records found",
                     processing: "<i class=\'fa fa-spinner fa-spin\'></i> Loading..."
                 }
+            });
+
+            $('#btnDownloadClosingStockPdf').on('click', function (e) {
+                e.preventDefault();
+                var mg = selectedMaterialGroup ? selectedMaterialGroup : '';
+                var s = (table && table.search) ? (table.search() || '') : '';
+                var url = '@Url.Action("DownloadPdf", "ClosingStockEntry")' + '?materialGroupId=' + encodeURIComponent(mg) + '&search=' + encodeURIComponent(s);
+                window.location.href = url;
             });
 
             function syncTopScrollbar() {
