@@ -7,6 +7,7 @@ using log4net;
 using Microsoft.AspNet.Identity;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.Entity;
 using System.Data.SqlClient;
 using System.Linq;
@@ -64,9 +65,28 @@ namespace HMS_STOCK.Controllers
 
         public ActionResult Index()
         {
-            // Show the same dashboard for all users (Admin or regular users)
-            return View();
-            //return RedirectToAction("AdminDashboard");
+            try
+            {
+                var dt = new DataTable();
+                var connectionString = _db.Database.Connection.ConnectionString;
+
+                using (var conn = new SqlConnection(connectionString))
+                using (var cmd = new SqlCommand("pr_Dashboard_Physical_Stock_Assgn", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+
+                return View(dt);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = ex.Message;
+                return View(new DataTable());
+            }
         }
 
         [HttpGet]
