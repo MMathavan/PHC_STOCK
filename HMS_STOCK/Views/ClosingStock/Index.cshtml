@@ -500,7 +500,9 @@
                 scrollX: false,
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-                order: [[1, 'asc'], [2, 'asc'], [3, 'asc']],
+                order: (selectedMaterialGroup && selectedMaterialGroup !== "0")
+                    ? [[1, 'asc'], [2, 'asc'], [3, 'asc']]
+                    : [[0, 'asc'], [1, 'asc'], [3, 'asc']],
                 search: { search: initialSearch },
                 processing: true,
                 serverSide: true,

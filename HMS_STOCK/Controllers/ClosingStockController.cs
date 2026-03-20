@@ -64,8 +64,8 @@ namespace HMS_STOCK.Controllers
                 int start = request.Start;
                 int length = request.Length;
                 string searchValue = request.Search?.Value ?? "";
-                int sortColumn = request.Order != null && request.Order.Count > 0 ? request.Order[0].Column : 0;
-                string sortDirection = request.Order != null && request.Order.Count > 0 ? request.Order[0].Dir : "asc";
+                bool hasMaterialFilter = materialGroupId.HasValue && materialGroupId.Value > 0;
+                bool hasSearch = !string.IsNullOrWhiteSpace(searchValue);
 
                 if (Session != null)
                 {
@@ -79,7 +79,27 @@ namespace HMS_STOCK.Controllers
                     "STKPRATE", "CLVALUE", "CURRENTBATCH", "PHYQTY"
                 };
 
-                string sortColumnName = sortColumn < columns.Length ? columns[sortColumn] : "MTRLDESC";
+                // Build safe ORDER BY from DataTables ordering (supports multi-column order)
+                string defaultOrderBy = hasMaterialFilter
+                    ? "MTRLDESC asc, BATCHNO asc, STKEDATE asc"
+                    : "MTRLGDESC asc, MTRLDESC asc, STKEDATE asc";
+
+                string orderByClause = defaultOrderBy;
+                if (request.Order != null && request.Order.Count > 0)
+                {
+                    var parts = new List<string>();
+                    foreach (var o in request.Order)
+                    {
+                        if (o == null) continue;
+                        if (o.Column < 0 || o.Column >= columns.Length) continue;
+                        var dir = string.Equals(o.Dir, "desc", StringComparison.OrdinalIgnoreCase) ? "desc" : "asc";
+                        parts.Add(columns[o.Column] + " " + dir);
+                    }
+                    if (parts.Count > 0)
+                    {
+                        orderByClause = string.Join(", ", parts);
+                    }
+                }
 
                 // Calculate row numbers for paging
                 int startRowNum = start + 1;
@@ -106,9 +126,6 @@ namespace HMS_STOCK.Controllers
                 // Get filtered data
                 List<StockMaster_2526> stockData;
 
-                bool hasMaterialFilter = materialGroupId.HasValue && materialGroupId.Value > 0;
-                bool hasSearch = !string.IsNullOrWhiteSpace(searchValue);
-
                 if (hasMaterialFilter)
                 {
                     string where = "WHERE ISNULL(STKBID, 0) <> 0 AND MTRLGID = @p0";
@@ -117,7 +134,7 @@ namespace HMS_STOCK.Controllers
                         where += " AND (MTRLDESC LIKE @p1 OR BATCHNO LIKE @p1 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p1)";
                     }
 
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + orderByClause + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
 
                     if (hasSearch)
                     {
@@ -142,7 +159,7 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + orderByClause + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -156,7 +173,7 @@ namespace HMS_STOCK.Controllers
                 else
                 {
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + orderByClause + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 
