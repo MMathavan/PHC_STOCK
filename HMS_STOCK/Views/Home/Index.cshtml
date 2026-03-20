@@ -12,11 +12,69 @@
         font-weight: 700;
         border-width: 2px !important;
     }
+
+    .dashboard-header {
+        background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+        color: #fff;
+        padding: 18px 20px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+    }
+
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 26px;
+        font-weight: 700;
+        color: #fff;
+    }
+
+    .dashboard-header p {
+        margin: 6px 0 0 0;
+        opacity: 0.95;
+    }
+
+    .dashboard-sp-table thead th {
+        background: #1976d2;
+        color: #fff;
+        border-color: #1565c0 !important;
+        white-space: normal;
+        word-break: break-word;
+        line-height: 1.2;
+        vertical-align: middle;
+    }
+
+    .dashboard-sp-table thead th.col-excess,
+    .dashboard-sp-table tbody td.col-excess {
+        background: #e8f5e9;
+        color: #1b5e20;
+        font-weight: 600;
+    }
+
+    .dashboard-sp-table thead th.col-short,
+    .dashboard-sp-table tbody td.col-short {
+        background: #ffebee;
+        color: #b71c1c;
+        font-weight: 600;
+    }
+
+    .dashboard-sp-table tbody tr:last-child {
+        background: #e3f2fd;
+    }
+
+    .dashboard-table-title {
+        text-align: center;
+        font-weight: 800;
+        margin: 10px 0 10px 0;
+        font-size: 16px;
+        letter-spacing: 0.5px;
+    }
 </style>
 
 <div class="container" style="margin-top:20px;">
-    <h1>Admin Dashboard</h1>
-    <p>Welcome, @(userName ?? "Administrator")! </p>
+    <div class="dashboard-header">
+        <h1>Admin Dashboard</h1>
+        <p>Welcome, @(userName ?? "Administrator")! </p>
+    </div>
 
     @if (ViewBag.ErrorMessage != null)
     {
@@ -25,6 +83,7 @@
 
     @if (Model != null && Model.Columns != null && Model.Columns.Count > 0)
     {
+        <div class="dashboard-table-title">PHARMACY OPENING CLOSING STOCK 2026 - 2027</div>
         <div class="table-responsive">
             <table class="table table-bordered table-striped dashboard-sp-table" style="margin-top:15px;">
                 <thead>
@@ -37,11 +96,19 @@
                             }
                             else if (string.Equals(col.ColumnName, "CLVALUE", StringComparison.OrdinalIgnoreCase))
                             {
-                                <th>Closing Value (CLVALUE)</th>
+                                <th>Closing Value (CLVALUE) 29-03-2026</th>
                             }
                             else if (string.Equals(col.ColumnName, "OPVALUE", StringComparison.OrdinalIgnoreCase))
                             {
-                                <th>Opening Value (OPVALUE)</th>
+                                <th>Opening Value (OPVALUE) 01-04-2026</th>
+                            }
+                            else if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <th class="col-excess">EXCESS</th>
+                            }
+                            else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                            {
+                                <th class="col-short">SHORT</th>
                             }
                             else
                             {
@@ -58,7 +125,18 @@
                             <tr>
                                 @foreach (System.Data.DataColumn col in Model.Columns)
                                 {
-                                    <td>@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                    if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <td class="col-excess">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <td class="col-short">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                    }
                                 }
                             </tr>
                         }
