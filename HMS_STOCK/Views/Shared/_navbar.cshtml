@@ -450,7 +450,7 @@
                         var hasUnit = User.IsInRole("UnitMasterIndex");
                         System.Diagnostics.Debug.WriteLine(string.Format("[Navbar] SupplierMasterIndex={0}, StateMasterIndex={1}, UnitMasterIndex={2}, isAdmin={3}", hasSupplier, hasState, hasUnit, isAdmin));
                     }
-                    @if (Model != null && (isAdmin || 
+                    @if (false && Model != null && (isAdmin || 
                         User.IsInRole("CompanyMasterIndex") || 
                         User.IsInRole("DesginationMasterIndex") || 
                         User.IsInRole("DepartmentMasterIndex") || 
