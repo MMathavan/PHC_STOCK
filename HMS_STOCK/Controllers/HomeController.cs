@@ -10,9 +10,12 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.Entity;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
+using iTextSharp.text;
+using iTextSharp.text.pdf;
 
 namespace HMS_STOCK.Controllers
 {
@@ -86,6 +89,139 @@ namespace HMS_STOCK.Controllers
             {
                 ViewBag.ErrorMessage = ex.Message;
                 return View(new DataTable());
+            }
+        }
+
+        [HttpGet]
+        public ActionResult DownloadDashboardPdf()
+        {
+            try
+            {
+                var dt = new DataTable();
+                var connectionString = _db.Database.Connection.ConnectionString;
+
+                using (var conn = new SqlConnection(connectionString))
+                using (var cmd = new SqlCommand("pr_Dashboard_Physical_Stock_Assgn", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(dt);
+                    }
+                }
+
+                byte[] pdfBytes = BuildDashboardPdf(dt);
+                return File(pdfBytes, "application/pdf", "PHARMACY_OPENING_CLOSING_STOCK_26-27.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index");
+            }
+        }
+
+        private static byte[] BuildDashboardPdf(DataTable dt)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var pageSize = PageSize.A4.Rotate();
+                using (var document = new Document(pageSize, 24f, 24f, 30f, 30f))
+                {
+                    PdfWriter.GetInstance(document, ms);
+                    document.Open();
+
+                    var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
+                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
+                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+
+                    var title = new Paragraph("PHARMACY OPENING CLOSING STOCK 2026 - 2027", fontTitle)
+                    {
+                        Alignment = Element.ALIGN_CENTER,
+                        SpacingAfter = 10f
+                    };
+                    document.Add(title);
+
+                    if (dt == null || dt.Columns == null || dt.Columns.Count == 0)
+                    {
+                        document.Add(new Paragraph("No data available", fontCell));
+                        document.Close();
+                        return ms.ToArray();
+                    }
+
+                    var table = new PdfPTable(dt.Columns.Count) { WidthPercentage = 100 };
+                    table.HeaderRows = 1;
+
+                    var headerBg = new BaseColor(25, 118, 210);
+                    for (int i = 0; i < dt.Columns.Count; i++)
+                    {
+                        string colName = dt.Columns[i].ColumnName;
+                        string headerText = colName;
+                        if (string.Equals(colName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase)) headerText = "Material Group Description (MTRLGDESC)";
+                        else if (string.Equals(colName, "CLVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Closing Value (CLVALUE) 29-03-2026";
+                        else if (string.Equals(colName, "OPVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Opening Value (OPVALUE) 01-04-2026";
+
+                        var cell = new PdfPCell(new Phrase(headerText, fontHeader))
+                        {
+                            BackgroundColor = headerBg,
+                            HorizontalAlignment = Element.ALIGN_CENTER,
+                            VerticalAlignment = Element.ALIGN_MIDDLE,
+                            Padding = 5f,
+                            BorderWidth = 0.6f
+                        };
+                        table.AddCell(cell);
+                    }
+
+                    for (int r = 0; r < dt.Rows.Count; r++)
+                    {
+                        var row = dt.Rows[r];
+                        bool isLastRow = r == dt.Rows.Count - 1;
+                        for (int c = 0; c < dt.Columns.Count; c++)
+                        {
+                            string colName = dt.Columns[c].ColumnName;
+                            string text = row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c]);
+
+                            BaseColor bg = BaseColor.WHITE;
+                            BaseColor fg = BaseColor.BLACK;
+                            if (string.Equals(colName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                            {
+                                bg = new BaseColor(232, 245, 233);
+                                fg = new BaseColor(27, 94, 32);
+                            }
+                            else if (string.Equals(colName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                            {
+                                bg = new BaseColor(255, 235, 238);
+                                fg = new BaseColor(183, 28, 28);
+                            }
+                            else if (isLastRow)
+                            {
+                                bg = new BaseColor(227, 242, 253);
+                            }
+
+                            var dataCell = new PdfPCell(new Phrase(text, fontCell))
+                            {
+                                BackgroundColor = bg,
+                                HorizontalAlignment = Element.ALIGN_CENTER,
+                                VerticalAlignment = Element.ALIGN_MIDDLE,
+                                Padding = 4f,
+                                BorderWidth = 0.6f
+                            };
+                            dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA, 8, fg));
+
+                            if (isLastRow)
+                            {
+                                dataCell.BorderWidth = 1.2f;
+                                dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, fg));
+                            }
+
+                            table.AddCell(dataCell);
+                        }
+                    }
+
+                    document.Add(table);
+                    document.Close();
+                }
+
+                return ms.ToArray();
             }
         }
 
