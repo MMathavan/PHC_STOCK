@@ -45,16 +45,22 @@
 
     .dashboard-sp-table thead th.col-excess,
     .dashboard-sp-table tbody td.col-excess {
-        background: #e8f5e9;
-        color: #1b5e20;
         font-weight: 600;
     }
 
     .dashboard-sp-table thead th.col-short,
     .dashboard-sp-table tbody td.col-short {
+        font-weight: 600;
+    }
+
+    .dashboard-sp-table tbody td.col-excess {
+        background: #e8f5e9;
+        color: #1b5e20;
+    }
+
+    .dashboard-sp-table tbody td.col-short {
         background: #ffebee;
         color: #b71c1c;
-        font-weight: 600;
     }
 
     .dashboard-sp-table tbody tr:last-child {
@@ -96,11 +102,11 @@
                             }
                             else if (string.Equals(col.ColumnName, "CLVALUE", StringComparison.OrdinalIgnoreCase))
                             {
-                                <th>Closing Value (CLVALUE) 29-03-2026</th>
+                                <th>Closing Value (CLVALUE)<br />29-03-2026</th>
                             }
                             else if (string.Equals(col.ColumnName, "OPVALUE", StringComparison.OrdinalIgnoreCase))
                             {
-                                <th>Opening Value (OPVALUE) 01-04-2026</th>
+                                <th>Opening Value (OPVALUE)<br />01-04-2026</th>
                             }
                             else if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
                             {
