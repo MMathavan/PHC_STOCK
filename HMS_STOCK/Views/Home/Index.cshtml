@@ -205,6 +205,81 @@
                     </tbody>
                 </table>
             </div>
+
+            var subStoreTable = ViewBag.SubStoreDashboardTable as System.Data.DataTable;
+            if (subStoreTable != null && subStoreTable.Columns != null && subStoreTable.Columns.Count > 0)
+            {
+                <div class="dashboard-table-header-row" style="margin-top:18px;">
+                    <div class="dashboard-table-title">SUB STORE OPENING CLOSING STOCK 2026 - 2027</div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped dashboard-sp-table" style="margin-top:15px;">
+                        <thead>
+                            <tr>
+                                @foreach (System.Data.DataColumn col in subStoreTable.Columns)
+                                {
+                                    if (string.Equals(col.ColumnName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <th>Material Group Description (MTRLGDESC)</th>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "CLVALUE", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <th>Closing Value (CLVALUE)<br />29-03-2026</th>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "OPVALUE", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <th>Opening Value (OPVALUE)<br />01-04-2026</th>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <th class="col-excess">EXCESS</th>
+                                    }
+                                    else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        <th class="col-short">SHORT</th>
+                                    }
+                                    else
+                                    {
+                                        <th>@col.ColumnName</th>
+                                    }
+                                }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (subStoreTable.Rows.Count > 0)
+                            {
+                                foreach (System.Data.DataRow row in subStoreTable.Rows)
+                                {
+                                    <tr>
+                                        @foreach (System.Data.DataColumn col in subStoreTable.Columns)
+                                        {
+                                            if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <td class="col-excess">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                            }
+                                            else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                            {
+                                                <td class="col-short">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                            }
+                                            else
+                                            {
+                                                <td>@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                            }
+                                        }
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="@subStoreTable.Columns.Count" style="text-align:center;">No data available</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         }
     }
     else

@@ -162,6 +162,7 @@ ORDER BY ISNULL(MTRLGDESC, '')";
                 }
 
                 var dt = new DataTable();
+                var subStoreDt = new DataTable();
 
                 using (var conn = new SqlConnection(connectionString))
                 using (var cmd = new SqlCommand("pr_Dashboard_Physical_Stock_Assgn", conn))
@@ -172,6 +173,18 @@ ORDER BY ISNULL(MTRLGDESC, '')";
                         da.Fill(dt);
                     }
                 }
+
+                using (var conn = new SqlConnection(connectionString))
+                using (var cmd = new SqlCommand("pr_Substore_Dashboard_Physical_Stock_Assgn", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(subStoreDt);
+                    }
+                }
+
+                ViewBag.SubStoreDashboardTable = subStoreDt;
 
                 return View(dt);
             }
@@ -193,6 +206,7 @@ ORDER BY ISNULL(MTRLGDESC, '')";
             try
             {
                 var dt = new DataTable();
+                var subStoreDt = new DataTable();
                 var connectionString = _db.Database.Connection.ConnectionString;
 
                 using (var conn = new SqlConnection(connectionString))
@@ -205,7 +219,17 @@ ORDER BY ISNULL(MTRLGDESC, '')";
                     }
                 }
 
-                byte[] pdfBytes = BuildDashboardPdf(dt);
+                using (var conn = new SqlConnection(connectionString))
+                using (var cmd = new SqlCommand("pr_Substore_Dashboard_Physical_Stock_Assgn", conn))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    using (var da = new SqlDataAdapter(cmd))
+                    {
+                        da.Fill(subStoreDt);
+                    }
+                }
+
+                byte[] pdfBytes = BuildDashboardPdf(dt, subStoreDt);
                 return File(pdfBytes, "application/pdf", "PHARMACY_OPENING_CLOSING_STOCK_26-27.pdf");
             }
             catch (Exception ex)
@@ -215,7 +239,7 @@ ORDER BY ISNULL(MTRLGDESC, '')";
             }
         }
 
-        private static byte[] BuildDashboardPdf(DataTable dt)
+        private static byte[] BuildDashboardPdf(DataTable dt, DataTable subStoreDt)
         {
             using (var ms = new MemoryStream())
             {
@@ -229,90 +253,98 @@ ORDER BY ISNULL(MTRLGDESC, '')";
                     var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
                     var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
 
-                    var title = new Paragraph("PHARMACY OPENING CLOSING STOCK 2026 - 2027", fontTitle)
+                    void AddDashboardTable(DataTable data, string heading)
                     {
-                        Alignment = Element.ALIGN_CENTER,
-                        SpacingAfter = 10f
-                    };
-                    document.Add(title);
-
-                    if (dt == null || dt.Columns == null || dt.Columns.Count == 0)
-                    {
-                        document.Add(new Paragraph("No data available", fontCell));
-                        document.Close();
-                        return ms.ToArray();
-                    }
-
-                    var table = new PdfPTable(dt.Columns.Count) { WidthPercentage = 100 };
-                    table.HeaderRows = 1;
-
-                    var headerBg = new BaseColor(25, 118, 210);
-                    for (int i = 0; i < dt.Columns.Count; i++)
-                    {
-                        string colName = dt.Columns[i].ColumnName;
-                        string headerText = colName;
-                        if (string.Equals(colName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase)) headerText = "Material Group Description (MTRLGDESC)";
-                        else if (string.Equals(colName, "CLVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Closing Value (CLVALUE) 29-03-2026";
-                        else if (string.Equals(colName, "OPVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Opening Value (OPVALUE) 01-04-2026";
-
-                        var cell = new PdfPCell(new Phrase(headerText, fontHeader))
+                        var title = new Paragraph(heading, fontTitle)
                         {
-                            BackgroundColor = headerBg,
-                            HorizontalAlignment = Element.ALIGN_CENTER,
-                            VerticalAlignment = Element.ALIGN_MIDDLE,
-                            Padding = 5f,
-                            BorderWidth = 0.6f
+                            Alignment = Element.ALIGN_CENTER,
+                            SpacingAfter = 10f
                         };
-                        table.AddCell(cell);
-                    }
+                        document.Add(title);
 
-                    for (int r = 0; r < dt.Rows.Count; r++)
-                    {
-                        var row = dt.Rows[r];
-                        bool isLastRow = r == dt.Rows.Count - 1;
-                        for (int c = 0; c < dt.Columns.Count; c++)
+                        if (data == null || data.Columns == null || data.Columns.Count == 0)
                         {
-                            string colName = dt.Columns[c].ColumnName;
-                            string text = row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c]);
+                            document.Add(new Paragraph("No data available", fontCell));
+                            document.Add(new Paragraph(" ", fontCell));
+                            return;
+                        }
 
-                            BaseColor bg = BaseColor.WHITE;
-                            BaseColor fg = BaseColor.BLACK;
-                            if (string.Equals(colName, "EXCESS", StringComparison.OrdinalIgnoreCase))
-                            {
-                                bg = new BaseColor(232, 245, 233);
-                                fg = new BaseColor(27, 94, 32);
-                            }
-                            else if (string.Equals(colName, "SHORT", StringComparison.OrdinalIgnoreCase))
-                            {
-                                bg = new BaseColor(255, 235, 238);
-                                fg = new BaseColor(183, 28, 28);
-                            }
-                            else if (isLastRow)
-                            {
-                                bg = new BaseColor(227, 242, 253);
-                            }
+                        var table = new PdfPTable(data.Columns.Count) { WidthPercentage = 100 };
+                        table.HeaderRows = 1;
 
-                            var dataCell = new PdfPCell(new Phrase(text, fontCell))
+                        var headerBg = new BaseColor(25, 118, 210);
+                        for (int i = 0; i < data.Columns.Count; i++)
+                        {
+                            string colName = data.Columns[i].ColumnName;
+                            string headerText = colName;
+                            if (string.Equals(colName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase)) headerText = "Material Group Description (MTRLGDESC)";
+                            else if (string.Equals(colName, "CLVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Closing Value (CLVALUE) 29-03-2026";
+                            else if (string.Equals(colName, "OPVALUE", StringComparison.OrdinalIgnoreCase)) headerText = "Opening Value (OPVALUE) 01-04-2026";
+
+                            var cell = new PdfPCell(new Phrase(headerText, fontHeader))
                             {
-                                BackgroundColor = bg,
+                                BackgroundColor = headerBg,
                                 HorizontalAlignment = Element.ALIGN_CENTER,
                                 VerticalAlignment = Element.ALIGN_MIDDLE,
-                                Padding = 4f,
+                                Padding = 5f,
                                 BorderWidth = 0.6f
                             };
-                            dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA, 8, fg));
-
-                            if (isLastRow)
-                            {
-                                dataCell.BorderWidth = 1.2f;
-                                dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, fg));
-                            }
-
-                            table.AddCell(dataCell);
+                            table.AddCell(cell);
                         }
+
+                        for (int r = 0; r < data.Rows.Count; r++)
+                        {
+                            var row = data.Rows[r];
+                            bool isLastRow = r == data.Rows.Count - 1;
+                            for (int c = 0; c < data.Columns.Count; c++)
+                            {
+                                string colName = data.Columns[c].ColumnName;
+                                string text = row[c] == DBNull.Value ? string.Empty : Convert.ToString(row[c]);
+
+                                BaseColor bg = BaseColor.WHITE;
+                                BaseColor fg = BaseColor.BLACK;
+                                if (string.Equals(colName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    bg = new BaseColor(232, 245, 233);
+                                    fg = new BaseColor(27, 94, 32);
+                                }
+                                else if (string.Equals(colName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    bg = new BaseColor(255, 235, 238);
+                                    fg = new BaseColor(183, 28, 28);
+                                }
+                                else if (isLastRow)
+                                {
+                                    bg = new BaseColor(227, 242, 253);
+                                }
+
+                                var dataCell = new PdfPCell(new Phrase(text, fontCell))
+                                {
+                                    BackgroundColor = bg,
+                                    HorizontalAlignment = Element.ALIGN_CENTER,
+                                    VerticalAlignment = Element.ALIGN_MIDDLE,
+                                    Padding = 4f,
+                                    BorderWidth = 0.6f
+                                };
+                                dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA, 8, fg));
+
+                                if (isLastRow)
+                                {
+                                    dataCell.BorderWidth = 1.2f;
+                                    dataCell.Phrase = new Phrase(text, FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, fg));
+                                }
+
+                                table.AddCell(dataCell);
+                            }
+                        }
+
+                        document.Add(table);
+                        document.Add(new Paragraph(" ", fontCell));
                     }
 
-                    document.Add(table);
+                    AddDashboardTable(dt, "PHARMACY OPENING CLOSING STOCK 2026 - 2027");
+                    AddDashboardTable(subStoreDt, "Sub Store Opening Closing Stock 2026 - 2027");
+
                     document.Close();
                 }
 
