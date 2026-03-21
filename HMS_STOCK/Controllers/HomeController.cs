@@ -30,6 +30,25 @@ namespace HMS_STOCK.Controllers
             _db = new ApplicationDbContext();
         }
 
+        private bool IsDashboardUser()
+        {
+            if (!Request.IsAuthenticated)
+            {
+                return false;
+            }
+
+            if (User != null && (User.IsInRole("Admin") || User.IsInRole("SuperAdmin") || User.IsInRole("Manager")))
+            {
+                return true;
+            }
+
+            var session = System.Web.HttpContext.Current != null ? System.Web.HttpContext.Current.Session : null;
+            var group = session != null ? Convert.ToString(session["Group"]) : null;
+            return string.Equals(group, "Admin", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(group, "SuperAdmin", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(group, "Manager", StringComparison.OrdinalIgnoreCase);
+        }
+
 
         public ActionResult AdminDashboard()
         {
@@ -68,8 +87,15 @@ namespace HMS_STOCK.Controllers
 
         public ActionResult Index()
         {
+            ViewBag.IsDashboardUser = IsDashboardUser();
+
             try
             {
+                if (!(bool)ViewBag.IsDashboardUser)
+                {
+                    return View(new DataTable());
+                }
+
                 var dt = new DataTable();
                 var connectionString = _db.Database.Connection.ConnectionString;
 
@@ -95,6 +121,11 @@ namespace HMS_STOCK.Controllers
         [HttpGet]
         public ActionResult DownloadDashboardPdf()
         {
+            if (!IsDashboardUser())
+            {
+                return new HttpUnauthorizedResult();
+            }
+
             try
             {
                 var dt = new DataTable();

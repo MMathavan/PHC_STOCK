@@ -115,92 +115,107 @@
 </style>
 
 <div class="container" style="margin-top:20px;">
-    <div class="dashboard-header">
-        <h1>Admin Dashboard</h1>
-        <p>Welcome, @(userName ?? "Administrator")! </p>
-    </div>
-
-    @if (ViewBag.ErrorMessage != null)
+    @if (ViewBag.IsDashboardUser != null && (bool)ViewBag.IsDashboardUser)
     {
-        <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
-    }
-
-    @if (Model != null && Model.Columns != null && Model.Columns.Count > 0)
-    {
-        <div class="dashboard-table-header-row">
-            <div class="dashboard-table-title">PHARMACY OPENING CLOSING STOCK 2026 - 2027</div>
-            <div class="dashboard-actions">
-                <a class="btn-dashboard-pdf" href="@Url.Action("DownloadDashboardPdf", "Home")">
-                    <i class="bi bi-download"></i>
-                    Download as PDF
-                </a>
-            </div>
+        <div class="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <p>Welcome, @(userName ?? "Administrator")! </p>
         </div>
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped dashboard-sp-table" style="margin-top:15px;">
-                <thead>
-                    <tr>
-                        @foreach (System.Data.DataColumn col in Model.Columns)
+
+        if (ViewBag.ErrorMessage != null)
+        {
+            <div class="alert alert-danger">@ViewBag.ErrorMessage</div>
+        }
+
+        if (Model != null && Model.Columns != null && Model.Columns.Count > 0)
+        {
+            <div class="dashboard-table-header-row">
+                <div class="dashboard-table-title">PHARMACY OPENING CLOSING STOCK 2026 - 2027</div>
+                <div class="dashboard-actions">
+                    <a class="btn-dashboard-pdf" href="@Url.Action("DownloadDashboardPdf", "Home")">
+                        <i class="bi bi-download"></i>
+                        Download as PDF
+                    </a>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped dashboard-sp-table" style="margin-top:15px;">
+                    <thead>
+                        <tr>
+                            @foreach (System.Data.DataColumn col in Model.Columns)
+                            {
+                                if (string.Equals(col.ColumnName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <th>Material Group Description (MTRLGDESC)</th>
+                                }
+                                else if (string.Equals(col.ColumnName, "CLVALUE", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <th>Closing Value (CLVALUE)<br />29-03-2026</th>
+                                }
+                                else if (string.Equals(col.ColumnName, "OPVALUE", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <th>Opening Value (OPVALUE)<br />01-04-2026</th>
+                                }
+                                else if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <th class="col-excess">EXCESS</th>
+                                }
+                                else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                {
+                                    <th class="col-short">SHORT</th>
+                                }
+                                else
+                                {
+                                    <th>@col.ColumnName</th>
+                                }
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.Rows.Count > 0)
                         {
-                            if (string.Equals(col.ColumnName, "MTRLGDESC", StringComparison.OrdinalIgnoreCase))
+                            foreach (System.Data.DataRow row in Model.Rows)
                             {
-                                <th>Material Group Description (MTRLGDESC)</th>
-                            }
-                            else if (string.Equals(col.ColumnName, "CLVALUE", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <th>Closing Value (CLVALUE)<br />29-03-2026</th>
-                            }
-                            else if (string.Equals(col.ColumnName, "OPVALUE", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <th>Opening Value (OPVALUE)<br />01-04-2026</th>
-                            }
-                            else if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <th class="col-excess">EXCESS</th>
-                            }
-                            else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
-                            {
-                                <th class="col-short">SHORT</th>
-                            }
-                            else
-                            {
-                                <th>@col.ColumnName</th>
+                                <tr>
+                                    @foreach (System.Data.DataColumn col in Model.Columns)
+                                    {
+                                        if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <td class="col-excess">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                        }
+                                        else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <td class="col-short">@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                        }
+                                        else
+                                        {
+                                            <td>@(row[col] == DBNull.Value ? "" : row[col])</td>
+                                        }
+                                    }
+                                </tr>
                             }
                         }
-                    </tr>
-                </thead>
-                <tbody>
-                    @if (Model.Rows.Count > 0)
-                    {
-                        foreach (System.Data.DataRow row in Model.Rows)
+                        else
                         {
                             <tr>
-                                @foreach (System.Data.DataColumn col in Model.Columns)
-                                {
-                                    if (string.Equals(col.ColumnName, "EXCESS", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        <td class="col-excess">@(row[col] == DBNull.Value ? "" : row[col])</td>
-                                    }
-                                    else if (string.Equals(col.ColumnName, "SHORT", StringComparison.OrdinalIgnoreCase))
-                                    {
-                                        <td class="col-short">@(row[col] == DBNull.Value ? "" : row[col])</td>
-                                    }
-                                    else
-                                    {
-                                        <td>@(row[col] == DBNull.Value ? "" : row[col])</td>
-                                    }
-                                }
+                                <td colspan="@Model.Columns.Count" style="text-align:center;">No data available</td>
                             </tr>
                         }
-                    }
-                    else
-                    {
-                        <tr>
-                            <td colspan="@Model.Columns.Count" style="text-align:center;">No data available</td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                    </tbody>
+                </table>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="dashboard-header">
+            <h1>Dashboard</h1>
+            <p>Welcome, @(userName ?? "User")! </p>
+        </div>
+
+        <div class="alert alert-info" style="margin-top:15px;">
+            Dashboard details are not available for your role.
         </div>
     }
 </div>

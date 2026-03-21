@@ -2,6 +2,14 @@
 @model IEnumerable<HMS_STOCK.Models.MenuNavbar>
 @{
     var isAdmin = Request.IsAuthenticated && (User.IsInRole("Admin") || (System.Web.HttpContext.Current.Session != null && System.Web.HttpContext.Current.Session["Group"] != null && (System.Web.HttpContext.Current.Session["Group"].ToString() == "Admin" || System.Web.HttpContext.Current.Session["Group"].ToString() == "SuperAdmin")));
+    var isDashboardUser = Request.IsAuthenticated && (
+        User.IsInRole("Admin") || User.IsInRole("SuperAdmin") || User.IsInRole("Manager") ||
+        (System.Web.HttpContext.Current.Session != null && System.Web.HttpContext.Current.Session["Group"] != null && (
+            System.Web.HttpContext.Current.Session["Group"].ToString() == "Admin" ||
+            System.Web.HttpContext.Current.Session["Group"].ToString() == "SuperAdmin" ||
+            System.Web.HttpContext.Current.Session["Group"].ToString() == "Manager"
+        ))
+    );
 }
 
 <style>
@@ -412,7 +420,7 @@
                 <!-- Right-aligned menu items -->
                 <ul class="navbar-nav ms-auto">
                     @* Dashboard Link *@
-                    @if (isAdmin)
+                    @if (isDashboardUser)
                     {
                         <li class="nav-item">
                             <a class="nav-link" href="@Url.Action("Index", "Home")">
