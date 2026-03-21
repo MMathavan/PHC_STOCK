@@ -187,11 +187,11 @@
         <div class="table-container">
             <div class="page-header-bar">
                 <h3 class="page-title">
-                    <i class="fa fa-edit"></i> Main Store Physical Entry Report
+                    <i class="bi bi-pencil-fill"></i> Sub Store Physical Entry Report
                 </h3>
             </div>
             <div class="filter-section">
-                @using (Html.BeginForm("Index", "ManualEntry", FormMethod.Get, new { @class = "filter-form" }))
+                @using (Html.BeginForm("Index", "SubStoreManualEntry", FormMethod.Get, new { @class = "filter-form" }))
                 {
                     <div class="filter-row">
                         <div class="filter-group">
@@ -269,7 +269,7 @@
                     return;
                 }
 
-                var url = '@Url.Action("DownloadPdf", "ManualEntry")' + '?materialGroupId=' + encodeURIComponent(gid);
+                var url = '@Url.Action("DownloadPdf", "SubStoreManualEntry")' + '?materialGroupId=' + encodeURIComponent(gid);
 
                 if (isTabletsSelected()) {
                     var from = $('#alphaFrom').val();

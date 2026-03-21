@@ -205,6 +205,7 @@
     <Compile Include="Controllers\ClosingStockEntryController.cs" />
     <Compile Include="Controllers\DirectManualEntryController.cs" />
     <Compile Include="Controllers\ManualEntryController.cs" />
+    <Compile Include="Controllers\SubStoreManualEntryController.cs" />
     <Compile Include="Controllers\SubStoreClosingStockController.cs" />
     <Compile Include="Controllers\SubStoreClosingStockEntryController.cs" />
     <Compile Include="Controllers\SubStoreDirectManualEntryController.cs" />
