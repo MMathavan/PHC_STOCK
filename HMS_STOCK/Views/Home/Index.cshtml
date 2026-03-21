@@ -214,8 +214,80 @@
             <p>Welcome, @(userName ?? "User")! </p>
         </div>
 
-        <div class="alert alert-info" style="margin-top:15px;">
-            Dashboard details are not available for your role.
+        <div class="row" style="margin-top:15px;">
+            <div class="col-md-6">
+                <h4 style="margin: 0 0 10px 0; font-weight:700;">Physical Stock Entry</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material Group Description</th>
+                                <th style="width:120px; text-align:center;">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var physicalSummary = ViewBag.PhysicalSummary as IEnumerable<HMS_STOCK.Controllers.HomeController.StockEntrySummaryRow>;
+                            }
+
+                            @if (physicalSummary != null && physicalSummary.Any())
+                            {
+                                foreach (var r in physicalSummary)
+                                {
+                                    <tr>
+                                        <td>@(r.MTRLGDESC ?? "")</td>
+                                        <td style="text-align:center;">@r.CNT</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center;">No data available</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 style="margin: 0 0 10px 0; font-weight:700;">Manual Stock Entry</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material Group Description</th>
+                                <th style="width:120px; text-align:center;">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var manualSummary = ViewBag.ManualSummary as IEnumerable<HMS_STOCK.Controllers.HomeController.StockEntrySummaryRow>;
+                            }
+
+                            @if (manualSummary != null && manualSummary.Any())
+                            {
+                                foreach (var r in manualSummary)
+                                {
+                                    <tr>
+                                        <td>@(r.MTRLGDESC ?? "")</td>
+                                        <td style="text-align:center;">@r.CNT</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center;">No data available</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     }
 </div>

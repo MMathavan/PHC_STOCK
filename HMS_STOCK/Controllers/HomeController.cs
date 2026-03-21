@@ -49,6 +49,12 @@ namespace HMS_STOCK.Controllers
                 || string.Equals(group, "Manager", StringComparison.OrdinalIgnoreCase);
         }
 
+        public sealed class StockEntrySummaryRow
+        {
+            public string MTRLGDESC { get; set; }
+            public int CNT { get; set; }
+        }
+
 
         public ActionResult AdminDashboard()
         {
@@ -85,19 +91,77 @@ namespace HMS_STOCK.Controllers
             return View();
         }
 
-        public ActionResult Index()
+        public ActionResult Index(int? physicalMaterialGroupId)
         {
             ViewBag.IsDashboardUser = IsDashboardUser();
 
             try
             {
+                var connectionString = _db.Database.Connection.ConnectionString;
+
                 if (!(bool)ViewBag.IsDashboardUser)
                 {
+                    var materialGroups = new List<SelectListItem>();
+                    using (var conn = new SqlConnection(connectionString))
+                    using (var cmd = new SqlCommand("SELECT MTRLGID, MTRLGDESC FROM MATERIALGROUPMASTER ORDER BY MTRLGDESC", conn))
+                    {
+                        conn.Open();
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                materialGroups.Add(new SelectListItem
+                                {
+                                    Value = Convert.ToString(reader["MTRLGID"]),
+                                    Text = Convert.ToString(reader["MTRLGDESC"])
+                                });
+                            }
+                        }
+                    }
+
+                    ViewBag.PhysicalMaterialGroups = new SelectList(materialGroups, "Value", "Text", physicalMaterialGroupId);
+                    ViewBag.SelectedPhysicalMaterialGroupId = physicalMaterialGroupId;
+
+                    var physicalWhere = "STKBID <> 0";
+                    if (physicalMaterialGroupId.HasValue)
+                    {
+                        physicalWhere += " AND MTRLGID = @p0";
+                    }
+                    var physicalSql = $@"SELECT ISNULL(MTRLGDESC, '') AS MTRLGDESC, COUNT(1) AS CNT
+FROM StockMaster_2526
+WHERE {physicalWhere}
+  AND ISNULL(LTRIM(RTRIM(CURRENTBATCH)), '') <> ''
+  AND PHYQTY IS NOT NULL
+GROUP BY ISNULL(MTRLGDESC, '')
+ORDER BY ISNULL(MTRLGDESC, '')";
+
+                    var manualSql = @"SELECT ISNULL(MTRLGDESC, '') AS MTRLGDESC, COUNT(1) AS CNT
+FROM StockMaster_2526
+WHERE STKBID = 0
+  AND ISNULL(LTRIM(RTRIM(CURRENTBATCH)), '') <> ''
+  AND PHYQTY IS NOT NULL
+GROUP BY ISNULL(MTRLGDESC, '')
+ORDER BY ISNULL(MTRLGDESC, '')";
+
+                    List<StockEntrySummaryRow> physicalSummary;
+                    if (physicalMaterialGroupId.HasValue)
+                    {
+                        physicalSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(physicalSql, physicalMaterialGroupId.Value).ToList();
+                    }
+                    else
+                    {
+                        physicalSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(physicalSql).ToList();
+                    }
+
+                    var manualSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(manualSql).ToList();
+
+                    ViewBag.PhysicalSummary = physicalSummary;
+                    ViewBag.ManualSummary = manualSummary;
+
                     return View(new DataTable());
                 }
 
                 var dt = new DataTable();
-                var connectionString = _db.Database.Connection.ConnectionString;
 
                 using (var conn = new SqlConnection(connectionString))
                 using (var cmd = new SqlCommand("pr_Dashboard_Physical_Stock_Assgn", conn))
