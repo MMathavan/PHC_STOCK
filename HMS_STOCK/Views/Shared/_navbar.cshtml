@@ -289,25 +289,55 @@
     <li class="nav-item dropdown">
         <a class="nav-link dropdown-toggle" href="#" id="stockDropdown" role="button"
            data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fa fa-boxes"></i> Stock
+            <i class="bi bi-shop"></i> Main Store
         </a>
         <ul class="dropdown-menu" aria-labelledby="stockDropdown">
             <li>
                 <a class="dropdown-item" href="@Url.Action("Index", "ClosingStockEntry")"
                    data-role="StockClosingEntry" data-menugroupid="100" data-menuorder="1">
-                    <i class="fa fa-stop-circle"></i> Closing Stock
+                    <i class="fa fa-stop-circle"></i> Main Store Closing Stock
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" href="@Url.Action("Index", "ClosingStock")"
                    data-role="StockClosing" data-menugroupid="100" data-menuorder="2">
-                    <i class="fa fa-clipboard"></i> Physical Stock Entry
+                    <i class="fa fa-clipboard"></i> Main Store Physical Stock Entry
                 </a>
             </li>
             <li>
                 <a class="dropdown-item" href="@Url.Action("Index", "DirectManualEntry")"
                    data-role="StockManualEntry" data-menugroupid="100" data-menuorder="3">
-                    <i class="bi bi-vector-pen"></i> Manual Stock Entry
+                    <i class="bi bi-vector-pen"></i> Main Store Manual Stock Entry
+                </a>
+            </li>
+        </ul>
+    </li>
+}
+
+@if (Request.IsAuthenticated)
+{
+    <li class="nav-item dropdown">
+        <a class="nav-link dropdown-toggle" href="#" id="stockDropdown" role="button"
+           data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="bi bi-shop-window"></i> Sub Store
+        </a>
+        <ul class="dropdown-menu" aria-labelledby="stockDropdown">
+            <li>
+                <a class="dropdown-item" href="@Url.Action("Index", "SubStoreClosingStockEntry")"
+                   data-role="StockClosingEntry" data-menugroupid="100" data-menuorder="1">
+                    <i class="fa fa-stop-circle"></i> Sub Store Closing Stock
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="@Url.Action("Index", "SubStoreClosingStock")"
+                   data-role="StockClosing" data-menugroupid="100" data-menuorder="2">
+                    <i class="fa fa-clipboard"></i> Sub Store Physical Stock Entry
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="@Url.Action("Index", "SubStoreDirectManualEntry")"
+                   data-role="StockManualEntry" data-menugroupid="100" data-menuorder="3">
+                    <i class="bi bi-vector-pen"></i> Sub Store Manual Stock Entry
                 </a>
             </li>
         </ul>

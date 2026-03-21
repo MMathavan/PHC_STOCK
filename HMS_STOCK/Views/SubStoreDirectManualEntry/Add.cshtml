@@ -171,12 +171,12 @@
     <div class="content-wrapper">
         <div class="page-header-bar">
             <h3 class="page-title">
-                <i class="bi bi-vector-pen"></i> Main Store Manual Stock Entry - @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add")
+                <i class="bi bi-vector-pen"></i> Sub Store Manual Stock Entry - @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add")
             </h3>
         </div>
 
         <div class="form-container">
-            @using (Html.BeginForm(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add", "DirectManualEntry", FormMethod.Post))
+            @using (Html.BeginForm(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add", "SubStoreDirectManualEntry", FormMethod.Post))
             {
                 @Html.AntiForgeryToken()
 
@@ -252,7 +252,7 @@
                 </div>
 
                 <div class="form-actions-row">
-                    <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">
+                    <a href="@Url.Action("Index", "SubStoreDirectManualEntry")" class="btn btn-secondary">
                         <i class="fa fa-arrow-left"></i> Back
                     </a>
                     <button type="submit" class="btn btn-primary" id="btnSave">
@@ -401,7 +401,7 @@
                 if (!mtrlid) return;
 
                 $.ajax({
-                    url: '@Url.Action("GetMaterialDetails", "DirectManualEntry")',
+                    url: '@Url.Action("GetMaterialDetails", "SubStoreDirectManualEntry")',
                     type: 'GET',
                     data: { mtrlid: mtrlid },
                     success: function (res) {

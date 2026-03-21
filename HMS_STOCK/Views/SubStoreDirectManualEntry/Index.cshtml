@@ -1,4 +1,4 @@
-@model IEnumerable<HMS_STOCK.Models.StockMaster_2526>
+@model IEnumerable<HMS_STOCK.Models.SubStoreStockMaster_2526>
 
 @{
     ViewBag.Title = "Manual Entry";
@@ -157,9 +157,9 @@
     <div class="content-wrapper">
         <div class="page-header-bar">
             <h3 class="page-title">
-                <i class="bi bi-vector-pen"></i> Main Store Manual Stock Entry
+                <i class="bi bi-vector-pen"></i> Sub Store Manual Stock Entry
             </h3>
-            <a href="@Url.Action("Add", "DirectManualEntry")" class="btn-add">
+            <a href="@Url.Action("Add", "SubStoreDirectManualEntry")" class="btn-add">
                 <i class="fa fa-plus"></i> Add Manual Stock Entry
             </a>
         </div>
@@ -229,7 +229,7 @@
                 order: [[1, 'asc']],
                 search: { search: initialSearch },
                 ajax: {
-                    url: '@Url.Action("GetManualEntryData", "DirectManualEntry")',
+                    url: '@Url.Action("GetManualEntryData", "SubStoreDirectManualEntry")',
                     type: 'POST'
                 },
                 columns: [
@@ -250,7 +250,7 @@
                             var sid = row && row.SID ? row.SID : 0;
                             if (!sid) return '';
 
-                            var editUrl = '@Url.Action("Edit", "DirectManualEntry")' + '/' + sid;
+                            var editUrl = '@Url.Action("Edit", "SubStoreDirectManualEntry")' + '/' + sid;
                             var html = '';
                             html += '<a href="' + editUrl + '" class="btn btn-sm btn-primary" style="margin-right:6px;">Edit</a>';
                             html += '<button type="button" class="btn btn-sm btn-danger btn-delete" data-id="' + sid + '">Delete</button>';
@@ -296,7 +296,7 @@
                         if (!result || !result.isConfirmed) return;
 
                         $.ajax({
-                            url: '@Url.Action("Delete", "DirectManualEntry")',
+                            url: '@Url.Action("Delete", "SubStoreDirectManualEntry")',
                             type: 'POST',
                             data: { id: sid },
                             success: function (res) {
@@ -334,7 +334,7 @@
                     if (!confirm('Are you sure you want to delete this record?')) return;
 
                     $.ajax({
-                        url: '@Url.Action("Delete", "DirectManualEntry")',
+                        url: '@Url.Action("Delete", "SubStoreDirectManualEntry")',
                         type: 'POST',
                         data: { id: sid },
                         success: function (res) {

@@ -205,6 +205,9 @@
     <Compile Include="Controllers\ClosingStockEntryController.cs" />
     <Compile Include="Controllers\DirectManualEntryController.cs" />
     <Compile Include="Controllers\ManualEntryController.cs" />
+    <Compile Include="Controllers\SubStoreClosingStockController.cs" />
+    <Compile Include="Controllers\SubStoreClosingStockEntryController.cs" />
+    <Compile Include="Controllers\SubStoreDirectManualEntryController.cs" />
     <Compile Include="Controllers\Masters\CommonController.cs" />
     <Compile Include="Controllers\Masters\CompanyMasterController.cs" />
     <!-- Excluded per cleanup (content modules) -->
@@ -327,6 +330,7 @@
     <Compile Include="Models\User.cs" />
     <Compile Include="Models\VW_ACCOUNTING_YEAR_DETAIL_ASSGN.cs" />
     <Compile Include="Models\StockMaster_2526.cs" />
+    <Compile Include="Models\SubStoreStockMaster_2526.cs" />
     <Compile Include="Models\MaterialGroupMaster.cs" />
     <Compile Include="Models\DataTableModels.cs" />
     <!-- Excluded per cleanup: GovernmentProof model removed -->

@@ -1,4 +1,4 @@
-@model IEnumerable<HMS_STOCK.Models.StockMaster_2526>
+@model IEnumerable<HMS_STOCK.Models.SubStoreStockMaster_2526>
 
 @{
     ViewBag.Title = "Closing Stock";
@@ -433,9 +433,9 @@
     <div class="content-wrapper">
         <div class="page-header-bar">
             <h3 class="page-title">
-                <i class="fa fa-stop-circle"></i> Main Store Closing Stock
+                <i class="fa fa-stop-circle"></i> Sub Store Closing Stock
             </h3>
-            <a id="btnDownloadClosingStockPdf" class="btn-download-pdf" href="@Url.Action("DownloadPdf", "ClosingStockEntry")">
+            <a id="btnDownloadClosingStockPdf" class="btn-download-pdf" href="@Url.Action("DownloadPdf", "SubStoreClosingStockEntry")">
                 <i class="bi bi-download"></i>
                 Download as PDF
             </a>
@@ -461,7 +461,7 @@
             </div>
 
             <div class="filter-section">
-                @using (Html.BeginForm("Index", "ClosingStockEntry", FormMethod.Get, new { @class = "filter-form" }))
+                @using (Html.BeginForm("Index", "SubStoreClosingStockEntry", FormMethod.Get, new { @class = "filter-form" }))
                 {
                     <div class="filter-row">
                         <div class="filter-group">
@@ -474,7 +474,7 @@
                             <button type="submit" class="btn-filter">
                                 <i class="fa fa-search"></i> Filter
                             </button>
-                            <a href="@Url.Action("Index", "ClosingStockEntry")" class="btn-reset">
+                            <a href="@Url.Action("Index", "SubStoreClosingStockEntry")" class="btn-reset">
                                 <i class="fa fa-refresh"></i> Reset
                             </a>
                         </div>
@@ -552,7 +552,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '@Url.Action("GetStockData", "ClosingStockEntry")',
+                    url: '@Url.Action("GetStockData", "SubStoreClosingStockEntry")',
                     type: 'POST',
                     data: function (d) {
                         d.MaterialGroupId = selectedMaterialGroup ? parseInt(selectedMaterialGroup) : null;
@@ -624,7 +624,7 @@
                 e.preventDefault();
                 var mg = selectedMaterialGroup ? selectedMaterialGroup : '';
                 var s = (table && table.search) ? (table.search() || '') : '';
-                var url = '@Url.Action("DownloadPdf", "ClosingStockEntry")' + '?materialGroupId=' + encodeURIComponent(mg) + '&search=' + encodeURIComponent(s);
+                var url = '@Url.Action("DownloadPdf", "SubStoreClosingStockEntry")' + '?materialGroupId=' + encodeURIComponent(mg) + '&search=' + encodeURIComponent(s);
                 window.location.href = url;
             });
 

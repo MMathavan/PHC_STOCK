@@ -1,4 +1,4 @@
-@model IEnumerable<HMS_STOCK.Models.StockMaster_2526>
+@model IEnumerable<HMS_STOCK.Models.SubStoreStockMaster_2526>
 
 @{
     ViewBag.Title = "Physical Stock Entry";
@@ -401,7 +401,7 @@
     <div class="content-wrapper">
         <div class="page-header-bar">
             <h3 class="page-title">
-                <i class="fa fa-clipboard"></i> Main Store Physical Stock Entry
+                <i class="fa fa-clipboard"></i> Sub Store Physical Stock Entry
             </h3>
         </div>
         <div class="table-container">
@@ -427,7 +427,7 @@
 
             @* Material Group Filter Dropdown *@
             <div class="filter-section">
-                @using (Html.BeginForm("Index", "ClosingStock", FormMethod.Get, new { @class = "filter-form" }))
+                @using (Html.BeginForm("Index", "SubStoreClosingStock", FormMethod.Get, new { @class = "filter-form" }))
                 {
                     <div class="filter-row">
                         <div class="filter-group">
@@ -440,7 +440,7 @@
                             <button type="submit" class="btn-filter">
                                 <i class="fa fa-search"></i> Filter
                             </button>
-                            <a href="@Url.Action("Index", "ClosingStock")" class="btn-reset">
+                            <a href="@Url.Action("Index", "SubStoreClosingStock")" class="btn-reset">
                                 <i class="fa fa-refresh"></i> Reset
                             </a>
                         </div>
@@ -507,7 +507,7 @@
                 processing: true,
                 serverSide: true,
                 ajax: {
-                    url: '@Url.Action("GetStockData", "ClosingStock")',
+                    url: '@Url.Action("GetStockData", "SubStoreClosingStock")',
                     type: 'POST',
                     data: function(d) {
                         d.MaterialGroupId = selectedMaterialGroup ? parseInt(selectedMaterialGroup) : null;
@@ -612,7 +612,7 @@
                 }
 
                 $.ajax({
-                    url: '@Url.Action("DeletePhysical", "ClosingStock")',
+                    url: '@Url.Action("DeletePhysical", "SubStoreClosingStock")',
                     type: 'POST',
                     data: { stkBid: id },
                     success: function (resp) {
@@ -645,7 +645,7 @@
                 }
 
                 $.ajax({
-                    url: '@Url.Action("UpdatePhysical", "ClosingStock")',
+                    url: '@Url.Action("UpdatePhysical", "SubStoreClosingStock")',
                     type: 'POST',
                     data: { stkBid: id, currentBatch: cb, phyQty: pq },
                     success: function (resp) {

@@ -22,6 +22,8 @@ namespace HMS_STOCK.Models
         public DbSet<UnitMaster> UnitMasters { get; set; }
         public DbSet<HSNCodeMaster> HSNCodeMasters { get; set; }
         public DbSet<CostFactorMaster> CostFactorMasters { get; set; }
+        public DbSet<StockMaster_2526> StockMaster_2526 { get; set; }
+        public DbSet<SubStoreStockMaster_2526> SubStoreStockMaster_2526 { get; set; }
         public DbSet<Subscription> Subscriptions { get; set; }
         new public virtual IDbSet<ApplicationRole> Roles { get; set; }
         public virtual IDbSet<Group> Groups { get; set; }
