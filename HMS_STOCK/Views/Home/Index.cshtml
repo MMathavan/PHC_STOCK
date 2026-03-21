@@ -364,5 +364,81 @@
                 </div>
             </div>
         </div>
+
+        <div class="row" style="margin-top:15px;">
+            <div class="col-md-6">
+                <h4 style="margin: 0 0 10px 0; font-weight:700;">Sub Store Physical Stock Entry</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material Group Description</th>
+                                <th style="width:120px; text-align:center;">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var subStorePhysicalSummary = ViewBag.SubStorePhysicalSummary as IEnumerable<HMS_STOCK.Controllers.HomeController.StockEntrySummaryRow>;
+                            }
+
+                            @if (subStorePhysicalSummary != null && subStorePhysicalSummary.Any())
+                            {
+                                foreach (var r in subStorePhysicalSummary)
+                                {
+                                    <tr>
+                                        <td>@(r.MTRLGDESC ?? "")</td>
+                                        <td style="text-align:center;">@r.CNT</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center;">No data available</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <h4 style="margin: 0 0 10px 0; font-weight:700;">Sub Store Manual Stock Entry</h4>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead>
+                            <tr>
+                                <th>Material Group Description</th>
+                                <th style="width:120px; text-align:center;">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var subStoreManualSummary = ViewBag.SubStoreManualSummary as IEnumerable<HMS_STOCK.Controllers.HomeController.StockEntrySummaryRow>;
+                            }
+
+                            @if (subStoreManualSummary != null && subStoreManualSummary.Any())
+                            {
+                                foreach (var r in subStoreManualSummary)
+                                {
+                                    <tr>
+                                        <td>@(r.MTRLGDESC ?? "")</td>
+                                        <td style="text-align:center;">@r.CNT</td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td colspan="2" style="text-align:center;">No data available</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     }
 </div>

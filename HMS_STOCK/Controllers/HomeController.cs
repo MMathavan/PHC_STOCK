@@ -155,8 +155,43 @@ ORDER BY ISNULL(MTRLGDESC, '')";
 
                     var manualSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(manualSql).ToList();
 
+                    var subStorePhysicalWhere = "STKBID <> 0";
+                    if (physicalMaterialGroupId.HasValue)
+                    {
+                        subStorePhysicalWhere += " AND MTRLGID = @p0";
+                    }
+                    var subStorePhysicalSql = $@"SELECT ISNULL(MTRLGDESC, '') AS MTRLGDESC, COUNT(1) AS CNT
+FROM SubStoreStockMaster_2526
+WHERE {subStorePhysicalWhere}
+  AND ISNULL(LTRIM(RTRIM(CURRENTBATCH)), '') <> ''
+  AND PHYQTY IS NOT NULL
+GROUP BY ISNULL(MTRLGDESC, '')
+ORDER BY ISNULL(MTRLGDESC, '')";
+
+                    var subStoreManualSql = @"SELECT ISNULL(MTRLGDESC, '') AS MTRLGDESC, COUNT(1) AS CNT
+FROM SubStoreStockMaster_2526
+WHERE STKBID = 0
+  AND ISNULL(LTRIM(RTRIM(CURRENTBATCH)), '') <> ''
+  AND PHYQTY IS NOT NULL
+GROUP BY ISNULL(MTRLGDESC, '')
+ORDER BY ISNULL(MTRLGDESC, '')";
+
+                    List<StockEntrySummaryRow> subStorePhysicalSummary;
+                    if (physicalMaterialGroupId.HasValue)
+                    {
+                        subStorePhysicalSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(subStorePhysicalSql, physicalMaterialGroupId.Value).ToList();
+                    }
+                    else
+                    {
+                        subStorePhysicalSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(subStorePhysicalSql).ToList();
+                    }
+
+                    var subStoreManualSummary = _db.Database.SqlQuery<StockEntrySummaryRow>(subStoreManualSql).ToList();
+
                     ViewBag.PhysicalSummary = physicalSummary;
                     ViewBag.ManualSummary = manualSummary;
+                    ViewBag.SubStorePhysicalSummary = subStorePhysicalSummary;
+                    ViewBag.SubStoreManualSummary = subStoreManualSummary;
 
                     return View(new DataTable());
                 }
