@@ -324,7 +324,7 @@ namespace HMS_STOCK.Controllers
                 db.Database.ExecuteSqlCommand(
                     @"UPDATE SubStoreStockMaster_2526
                       SET CURRENTBATCH = NULL,
-                          PHYQTY = NULL,
+                          PHYQTY = 0,
                           CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p1 ELSE CUSRID END,
                           LMUSRID = @p1,
                           PRCSDATE = GETDATE()

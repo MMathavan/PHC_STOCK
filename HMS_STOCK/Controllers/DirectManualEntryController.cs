@@ -151,7 +151,7 @@ namespace HMS_STOCK.Controllers
 
                 if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     rows = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -165,7 +165,7 @@ namespace HMS_STOCK.Controllers
                 else
                 {
                     rows = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE STKBID = 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 
@@ -210,16 +210,33 @@ namespace HMS_STOCK.Controllers
         public ActionResult Edit(int id)
         {
             var row = db.Database.SqlQuery<StockMaster_2526>(
-                "SELECT TOP 1 * FROM StockMaster_2526 WHERE SID = @p0", id).FirstOrDefault();
+                "SELECT TOP 1 *, CAST(NULL AS int) AS TRANDREFID FROM StockMaster_2526 WHERE SID = @p0", id).FirstOrDefault();
 
             if (row == null)
             {
                 return HttpNotFound();
             }
 
-            int selectedMtrlId = (row.TRANDREFID.HasValue && row.TRANDREFID.Value > 0)
-                ? row.TRANDREFID.Value
-                : row.TRANREFID;
+            int selectedMtrlId = 0;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(row.MTRLDESC))
+                {
+                    selectedMtrlId = db.Database.SqlQuery<int>(
+                            @"SELECT TOP 1 MTRLID
+                              FROM MATERIALMASTER
+                              WHERE MTRLDESC = @p0
+                                AND (DISPSTATUS = 0 OR DISPSTATUS IS NULL)
+                                AND (@p1 IS NULL OR MTRLGID = @p1)",
+                            row.MTRLDESC,
+                            row.MTRLGID)
+                        .FirstOrDefault();
+                }
+            }
+            catch
+            {
+                selectedMtrlId = 0;
+            }
 
             LoadAllMaterials(selectedMtrlId);
             ViewBag.IsEdit = true;
@@ -288,16 +305,14 @@ namespace HMS_STOCK.Controllers
                 db.Database.ExecuteSqlCommand(@"
 UPDATE StockMaster_2526
 SET
-    TRANDREFID = @p0,
-    CURRENTBATCH = @p1,
-    PHYQTY = @p2,
-    BATCHNO = @p3,
-    MTRLSTKQTY = @p4,
-    STKEDATE = @p5,
-    LMUSRID = @p6,
-    PRCSDATE = @p7
-WHERE SID = @p8",
-                    mtrlid.Value,
+    CURRENTBATCH = @p0,
+    PHYQTY = @p1,
+    BATCHNO = @p2,
+    MTRLSTKQTY = @p3,
+    STKEDATE = @p4,
+    LMUSRID = @p5,
+    PRCSDATE = @p6
+WHERE SID = @p7",
                     ToDbValue(currentBatch),
                     ToDbValue(phyQty.Value),
                     ToDbValue(currentBatch),
@@ -496,7 +511,6 @@ WHERE SID = @p8",
 
                 int? mtrlGid = group != null ? (int?)group.MTRLGID : GetDictValue<int?>(opening, "MTRLGID", null);
                 int trandRefGid = mtrlGid.HasValue ? mtrlGid.Value : 0;
-                int? trandRefId = mtrlid.Value;
                 string mtrlGDesc = group != null ? group.MTRLGDESC : GetDictValue<string>(opening, "MTRLGDESC", null);
                 string mtrlDesc = (mm != null ? mm.MTRLDESC : null) ?? GetDictValue<string>(opening, "TRANDREFNAME", null) ?? GetDictValue<string>(opening, "MTRLDESC", null);
                 int dacheadId = 44;
@@ -519,69 +533,73 @@ WHERE SID = @p8",
                 string userId = GetCurrentUserId();
                 DateTime prcsDate = DateTime.Now;
 
-                var sql =
-                    "EXEC PR_MANUALSTOCKENTRY_INSERT " +
-                    "@STKBID=@STKBID, " +
-                    "@TRANREFID=@TRANREFID, " +
-                    "@TRANREFNAME=@TRANREFNAME, " +
-                    "@TRANDREFGID=@TRANDREFGID, " +
-                    "@MTRLGID=@MTRLGID, " +
-                    "@TRANDREFID=@TRANDREFID, " +
-                    "@MTRLGDESC=@MTRLGDESC, " +
-                    "@MTRLDESC=@MTRLDESC, " +
-                    "@DACHEADID=@DACHEADID, " +
-                    "@PACKMID=@PACKMID, " +
-                    "@BATCHNO=@BATCHNO, " +
-                    "@STKEDATE=@STKEDATE, " +
-                    "@MTRLSTKQTY=@MTRLSTKQTY, " +
-                    "@STKPRATE=@STKPRATE, " +
-                    "@STKMRP=@STKMRP, " +
-                    "@ASTKSRATE=@ASTKSRATE, " +
-                    "@HSNID=@HSNID, " +
-                    "@TRANBCGSTEXPRN=@TRANBCGSTEXPRN, " +
-                    "@TRANBSGSTEXPRN=@TRANBSGSTEXPRN, " +
-                    "@TRANBIGSTEXPRN=@TRANBIGSTEXPRN, " +
-                    "@TRANBCGSTAMT=@TRANBCGSTAMT, " +
-                    "@TRANBSGSTAMT=@TRANBSGSTAMT, " +
-                    "@TRANBIGSTAMT=@TRANBIGSTAMT, " +
-                    "@CLVALUE=@CLVALUE, " +
-                    "@CURRENTBATCH=@CURRENTBATCH, " +
-                    "@PHYQTY=@PHYQTY, " +
-                    "@CUSRID=@CUSRID, " +
-                    "@LMUSRID=@LMUSRID, " +
-                    "@PRCSDATE=@PRCSDATE";
+                var insertSql =
+                    @"INSERT INTO StockMaster_2526
+(
+    STKBID,
+    TRANREFID,
+    TRANREFNAME,
+    TRANDREFGID,
+    MTRLGID,
+    MTRLGDESC,
+    MTRLDESC,
+    DACHEADID,
+    PACKMID,
+    BATCHNO,
+    STKEDATE,
+    MTRLSTKQTY,
+    STKPRATE,
+    STKMRP,
+    ASTKSRATE,
+    HSNID,
+    TRANBCGSTEXPRN,
+    TRANBSGSTEXPRN,
+    TRANBIGSTEXPRN,
+    TRANBCGSTAMT,
+    TRANBSGSTAMT,
+    TRANBIGSTAMT,
+    CLVALUE,
+    CURRENTBATCH,
+    PHYQTY,
+    CUSRID,
+    LMUSRID,
+    PRCSDATE
+)
+VALUES
+(
+    @p0,@p1,@p2,@p3,@p4,@p5,@p6,@p7,@p8,@p9,@p10,@p11,@p12,@p13,@p14,@p15,@p16,@p17,@p18,@p19,@p20,@p21,@p22,@p23,@p24,@p25,@p26,@p27
+)";
 
                 db.Database.ExecuteSqlCommand(
-                    sql,
-                    new SqlParameter("@STKBID", stkBid),
-                    new SqlParameter("@TRANREFID", tranRefId),
-                    new SqlParameter("@TRANREFNAME", tranRefName),
-                    new SqlParameter("@TRANDREFGID", trandRefGid),
-                    new SqlParameter("@MTRLGID", ToDbValue(mtrlGid)),
-                    new SqlParameter("@TRANDREFID", ToDbValue(trandRefId)),
-                    new SqlParameter("@MTRLGDESC", ToDbValue(mtrlGDesc)),
-                    new SqlParameter("@MTRLDESC", ToDbValue(mtrlDesc)),
-                    new SqlParameter("@DACHEADID", dacheadId),
-                    new SqlParameter("@PACKMID", packMid),
-                    new SqlParameter("@BATCHNO", batchNo ?? string.Empty),
-                    new SqlParameter("@STKEDATE", stkeDate),
-                    new SqlParameter("@MTRLSTKQTY", ToDbValue(mtrlStkQty)),
-                    new SqlParameter("@STKPRATE", stkPrate),
-                    new SqlParameter("@STKMRP", stkMrp),
-                    new SqlParameter("@ASTKSRATE", astkSRate),
-                    new SqlParameter("@HSNID", hsnId),
-                    new SqlParameter("@TRANBCGSTEXPRN", cgstExprn),
-                    new SqlParameter("@TRANBSGSTEXPRN", sgstExprn),
-                    new SqlParameter("@TRANBIGSTEXPRN", igstExprn),
-                    new SqlParameter("@TRANBCGSTAMT", cgstAmt),
-                    new SqlParameter("@TRANBSGSTAMT", sgstAmt),
-                    new SqlParameter("@TRANBIGSTAMT", igstAmt),
-                    new SqlParameter("@CLVALUE", ToDbValue(clValue)),
-                    new SqlParameter("@CURRENTBATCH", ToDbValue(currentBatch)),
-                    new SqlParameter("@PHYQTY", phyQty.Value),
-                    new SqlParameter("@CUSRID", ToDbValue(userId)),
-                    new SqlParameter("@LMUSRID", ToDbValue(userId)),
-                    new SqlParameter("@PRCSDATE", prcsDate));
+                    insertSql,
+                    stkBid,
+                    tranRefId,
+                    tranRefName,
+                    trandRefGid,
+                    ToDbValue(mtrlGid),
+                    ToDbValue(mtrlGDesc),
+                    ToDbValue(mtrlDesc),
+                    dacheadId,
+                    packMid,
+                    batchNo ?? string.Empty,
+                    stkeDate,
+                    ToDbValue(mtrlStkQty),
+                    stkPrate,
+                    stkMrp,
+                    astkSRate,
+                    hsnId,
+                    cgstExprn,
+                    sgstExprn,
+                    igstExprn,
+                    cgstAmt,
+                    sgstAmt,
+                    igstAmt,
+                    ToDbValue(clValue),
+                    ToDbValue(currentBatch),
+                    phyQty.Value,
+                    ToDbValue(userId),
+                    ToDbValue(userId),
+                    prcsDate);
 
                 TempData["SuccessMessage"] = "Saved Successfully";
                 return RedirectToAction("Index");

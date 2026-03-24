@@ -514,7 +514,7 @@ WHERE SID = @p8",
                 decimal cgstAmt = 0m;
                 decimal sgstAmt = 0m;
                 decimal igstAmt = 0m;
-                decimal? clValue = GetDictValue<decimal?>(opening, "CLVALUE", null);
+                decimal clValue = GetDictValue<decimal>(opening, "CLVALUE", 0m);
 
                 string userId = GetCurrentUserId();
                 DateTime prcsDate = DateTime.Now;
@@ -582,7 +582,7 @@ VALUES
                     cgstAmt,
                     sgstAmt,
                     igstAmt,
-                    ToDbValue(clValue),
+                    clValue,
                     ToDbValue(currentBatch),
                     phyQty.Value,
                     ToDbValue(userId),
