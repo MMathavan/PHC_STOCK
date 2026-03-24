@@ -296,7 +296,7 @@ namespace HMS_STOCK.Controllers
                         where += " AND (MTRLDESC LIKE @p1 OR BATCHNO LIKE @p1 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p1)";
                     }
 
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
+                    var query = "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
 
                     if (hasSearch)
                     {
@@ -321,7 +321,7 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -335,7 +335,7 @@ namespace HMS_STOCK.Controllers
                 else
                 {
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 
