@@ -324,8 +324,8 @@
     }
 
     #closingStockEntryTable {
-        width: 100% !important;
-        border-collapse: separate;
+        width: 100%;
+        border-collapse: collapse;
         border-spacing: 0;
         border-radius: 10px;
         overflow: hidden;
@@ -357,6 +357,36 @@
         white-space: nowrap;
     }
 
+    #closingStockEntryTable th,
+    #closingStockEntryTable td {
+        box-sizing: border-box;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollHead th,
+    #closingStockEntryTable_wrapper .dataTables_scrollBody td {
+        box-sizing: border-box;
+        padding: 10px 12px;
+        font-size: 12px;
+        white-space: nowrap;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollHead th {
+        text-align: center;
+        border-right: 1px solid rgba(255,255,255,0.2);
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollBody td {
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+        vertical-align: middle;
+    }
+
+    #closingStockEntryTable_wrapper .dataTables_scrollHead table,
+    #closingStockEntryTable_wrapper .dataTables_scrollBody table {
+        border-collapse: collapse;
+        border-spacing: 0;
+    }
+
     #closingStockEntryTable tbody td:nth-child(7),
     #closingStockEntryTable tbody td:nth-child(8) {
         text-align: left;
@@ -385,14 +415,8 @@
         border-radius: 10px;
     }
 
-    #closingStockEntryTable_wrapper .dataTables_scrollHeadInner,
-    #closingStockEntryTable_wrapper .dataTables_scrollBody table {
-        width: max-content !important;
-    }
-
     #closingStockEntryTable tbody tr:hover {
         background-color: #f8f9ff;
-        transform: scale(1.01);
         transition: all 0.2s ease;
     }
 
@@ -550,6 +574,7 @@
                 responsive: false,
                 autoWidth: false,
                 scrollX: true,
+                scrollXInner: '2740px',
                 scrollCollapse: true,
                 pageLength: 25,
                 lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
@@ -560,6 +585,23 @@
                 ajax: {
                     url: '@Url.Action("GetStockData", "ClosingStockEntry")',
                     type: 'POST',
+                    dataType: 'json',
+                    dataSrc: function (json) {
+                        try {
+                            if (json && json.error) {
+                                alert(json.error);
+                            }
+                        } catch (e) { }
+                        return (json && json.data) ? json.data : [];
+                    },
+                    error: function (xhr) {
+                        try {
+                            var msg = (xhr && xhr.responseText) ? xhr.responseText : 'Failed to load data';
+                            alert(msg);
+                        } catch (e) {
+                            alert('Failed to load data');
+                        }
+                    },
                     data: function (d) {
                         d.MaterialGroupId = selectedMaterialGroup ? parseInt(selectedMaterialGroup) : null;
                         return d;
@@ -623,8 +665,25 @@
                     emptyTable: "No stock records available",
                     zeroRecords: "No matching records found",
                     processing: "<i class=\'fa fa-spinner fa-spin\'></i> Loading..."
+                },
+                initComplete: function () {
+                    try {
+                        requestAnimationFrame(function () {
+                            adjustColumns();
+                            syncHeaderBodyWidths();
+                            syncTopScrollbar();
+                        });
+                    } catch (e) { }
                 }
             });
+
+            function adjustColumns() {
+                try {
+                    if (table && table.columns) {
+                        table.columns.adjust();
+                    }
+                } catch (e) { }
+            }
 
             $('#btnDownloadClosingStockPdf').on('click', function (e) {
                 e.preventDefault();
@@ -642,23 +701,63 @@
 
                 if (!$scrollBody.length || !$scrollHeadInner.length || !$top.length || !$topInner.length) return;
 
-                // Ensure inner width matches the actual table width in the scroll head
-                $topInner.width($scrollHeadInner.outerWidth());
+                // Ensure inner width matches the actual body table width (authoritative for scrollX)
+                var $scrollBodyTable = $('#closingStockEntryTable_wrapper .dataTables_scrollBody table');
+                if ($scrollBodyTable.length) {
+                    $topInner.width($scrollBodyTable[0].scrollWidth);
+                } else {
+                    $topInner.width($scrollHeadInner.outerWidth());
+                }
 
-                // Avoid duplicate bindings
-                $top.off('scroll.topSync');
-                $scrollBody.off('scroll.topSync');
+                // Bind scroll sync only once (rebinding on every draw is expensive)
+                if (!$top.data('topSyncBound')) {
+                    $top.data('topSyncBound', true);
+                    $top.on('scroll.topSync', function () {
+                        $scrollBody.scrollLeft($top.scrollLeft());
+                    });
+                    $scrollBody.on('scroll.topSync', function () {
+                        $top.scrollLeft($scrollBody.scrollLeft());
+                    });
+                }
+            }
 
-                $top.on('scroll.topSync', function () {
-                    $scrollBody.scrollLeft($top.scrollLeft());
-                });
-                $scrollBody.on('scroll.topSync', function () {
-                    $top.scrollLeft($scrollBody.scrollLeft());
-                });
+            function syncHeaderBodyWidths() {
+                try {
+                    var $scrollBodyTable = $('#closingStockEntryTable_wrapper .dataTables_scrollBody table');
+                    var $scrollHeadInner = $('#closingStockEntryTable_wrapper .dataTables_scrollHeadInner');
+                    if ($scrollBodyTable.length && $scrollHeadInner.length) {
+                        $scrollHeadInner.width($scrollBodyTable[0].scrollWidth);
+                    }
+                } catch (e) { }
+            }
+
+            var _syncTimer = null;
+            function syncAllSizes() {
+                try {
+                    if (_syncTimer) {
+                        clearTimeout(_syncTimer);
+                    }
+                    _syncTimer = setTimeout(function () {
+                        adjustColumns();
+                        syncHeaderBodyWidths();
+                        syncTopScrollbar();
+                    }, 0);
+                } catch (e) { }
             }
 
             syncTopScrollbar();
-            table.on('draw', syncTopScrollbar);
+            syncAllSizes();
+            table.on('draw', function () {
+                syncAllSizes();
+            });
+
+            $(window).on('resize', function () {
+                syncAllSizes();
+            });
+
+            table.on('xhr.dt', function () {
+                syncAllSizes();
+            });
         });
     </script>
 }
