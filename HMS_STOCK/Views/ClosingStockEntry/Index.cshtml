@@ -441,6 +441,12 @@
             </a>
         </div>
         <div class="table-container">
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger" style="margin-bottom: 15px;">
+                    @TempData["ErrorMessage"]
+                </div>
+            }
             <div class="summary-section" style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
                 <div class="summary-card" style="flex: 1; min-width: 200px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                     <div style="font-size: 12px; opacity: 0.9; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px;">

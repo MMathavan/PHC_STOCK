@@ -77,12 +77,13 @@ namespace HMS_STOCK.Controllers
                 }
 
                 var query = @"SELECT
+                        SID,
                         STKBID,
                         TRANREFID,
                         TRANREFNAME,
                         TRANDREFGID,
                         MTRLGID,
-                        TRANDREFID,
+                        TRANDREFID2 AS TRANDREFID,
                         MTRLGDESC,
                         MTRLDESC,
                         DACHEADID,
@@ -100,13 +101,18 @@ namespace HMS_STOCK.Controllers
                         TRANBCGSTAMT,
                         TRANBSGSTAMT,
                         TRANBIGSTAMT,
-                        CLVALUE
+                        CLVALUE,
+                        CURRENTBATCH,
+                        PHYQTY,
+                        CUSRID,
+                        LMUSRID,
+                        PRCSDATE
                     FROM StockMaster_2526 " + where + @"
                     ORDER BY MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE";
 
                 var rows = db.Database.SqlQuery<StockMaster_2526>(query, parameters.ToArray()).ToList();
                 var pdfBytes = BuildClosingStockEntryPdf(rows);
-                return File(pdfBytes, "application/pdf", "CLOSING_STOCK_2026-2027.pdf");
+                return File(pdfBytes, "application/pdf", "MAIN_STORE_CLOSING_STOCK_2026-2027.pdf");
             }
             catch (Exception ex)
             {
@@ -129,7 +135,7 @@ namespace HMS_STOCK.Controllers
                     var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 6.5f, BaseColor.WHITE);
                     var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 6.5f, BaseColor.BLACK);
 
-                    var title = new Paragraph("CLOSING STOCK 2026 - 2027", fontTitle)
+                    var title = new Paragraph("MAIN STORE CLOSING STOCK 2026 - 2027", fontTitle)
                     {
                         Alignment = Element.ALIGN_CENTER,
                         SpacingAfter = 8f
@@ -248,7 +254,7 @@ namespace HMS_STOCK.Controllers
                     "TRANREFNAME",
                     "TRANDREFGID",
                     "MTRLGID",
-                    "TRANDREFID",
+                    "TRANDREFID2",
                     "MTRLGDESC",
                     "MTRLDESC",
                     "DACHEADID",
@@ -296,7 +302,7 @@ namespace HMS_STOCK.Controllers
                         where += " AND (MTRLDESC LIKE @p1 OR BATCHNO LIKE @p1 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p1)";
                     }
 
-                    var query = "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
+                    var query = "SELECT * FROM (SELECT *, TRANDREFID2 AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 " + where + ") AS T WHERE T.RowNum BETWEEN @p" + (hasSearch ? "2" : "1") + " AND @p" + (hasSearch ? "3" : "2") + ";";
 
                     if (hasSearch)
                     {
@@ -321,7 +327,7 @@ namespace HMS_STOCK.Controllers
                 }
                 else if (hasSearch)
                 {
-                    var query = "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
+                    var query = "SELECT * FROM (SELECT *, TRANDREFID2 AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0 AND (MTRLDESC LIKE @p0 OR BATCHNO LIKE @p0 OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p0)) AS T WHERE T.RowNum BETWEEN @p1 AND @p2";
 
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
                         query,
@@ -335,7 +341,7 @@ namespace HMS_STOCK.Controllers
                 else
                 {
                     stockData = db.Database.SqlQuery<StockMaster_2526>(
-                        "SELECT * FROM (SELECT *, CAST(NULL AS int) AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
+                        "SELECT * FROM (SELECT *, TRANDREFID2 AS TRANDREFID, ROW_NUMBER() OVER (ORDER BY " + sortColumnName + " " + sortDirection + ") AS RowNum FROM StockMaster_2526 WHERE ISNULL(STKBID, 0) <> 0) AS T WHERE T.RowNum BETWEEN @p0 AND @p1",
                         startRowNum, endRowNum).ToList();
                 }
 

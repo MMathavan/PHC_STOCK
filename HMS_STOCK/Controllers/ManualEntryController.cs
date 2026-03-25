@@ -38,6 +38,8 @@ namespace HMS_STOCK.Controllers
                 return RedirectToAction("Index", new { materialGroupId = (int?)null });
             }
 
+            const string storePrefix = "MAIN STORE ";
+
             string materialGroupName = db.Database.SqlQuery<string>(
                     "SELECT TOP 1 MTRLGDESC FROM MATERIALGROUPMASTER WHERE MTRLGID = @p0",
                     materialGroupId)
@@ -119,6 +121,8 @@ namespace HMS_STOCK.Controllers
                 }
             }
 
+            reportTitle = storePrefix + reportTitle;
+
             byte[] pdfBytes = BuildManualEntryPdf(reportTitle, DateTime.Now, data);
 
             string fileTitle = materialGroupName;
@@ -126,6 +130,8 @@ namespace HMS_STOCK.Controllers
             {
                 fileTitle = string.Format("{0} from {1} to {2}", materialGroupName.Trim(), alphaFrom, alphaTo);
             }
+
+            fileTitle = storePrefix + fileTitle;
 
             string safeFileName = MakeSafeFileName(fileTitle) + ".pdf";
             return File(pdfBytes, "application/pdf", safeFileName);

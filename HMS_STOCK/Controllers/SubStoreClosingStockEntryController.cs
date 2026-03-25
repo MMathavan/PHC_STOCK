@@ -77,6 +77,7 @@ namespace HMS_STOCK.Controllers
                 }
 
                 var query = @"SELECT
+                        SID,
                         STKBID,
                         TRANREFID,
                         TRANREFNAME,
@@ -100,13 +101,18 @@ namespace HMS_STOCK.Controllers
                         TRANBCGSTAMT,
                         TRANBSGSTAMT,
                         TRANBIGSTAMT,
-                        CLVALUE
+                        CLVALUE,
+                        CURRENTBATCH,
+                        PHYQTY,
+                        CUSRID,
+                        LMUSRID,
+                        PRCSDATE
                     FROM SubStoreStockMaster_2526 " + where + @"
                     ORDER BY MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE";
 
                 var rows = db.Database.SqlQuery<SubStoreStockMaster_2526>(query, parameters.ToArray()).ToList();
                 var pdfBytes = BuildClosingStockEntryPdf(rows);
-                return File(pdfBytes, "application/pdf", "CLOSING_STOCK_2026-2027.pdf");
+                return File(pdfBytes, "application/pdf", "SUB_STORE_CLOSING_STOCK_2026-2027.pdf");
             }
             catch (Exception ex)
             {
@@ -129,7 +135,7 @@ namespace HMS_STOCK.Controllers
                     var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 6.5f, BaseColor.WHITE);
                     var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 6.5f, BaseColor.BLACK);
 
-                    var title = new Paragraph("CLOSING STOCK 2026 - 2027", fontTitle)
+                    var title = new Paragraph("SUB STORE CLOSING STOCK 2026 - 2027", fontTitle)
                     {
                         Alignment = Element.ALIGN_CENTER,
                         SpacingAfter = 8f
