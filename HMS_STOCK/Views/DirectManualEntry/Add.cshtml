@@ -173,6 +173,9 @@
             <h3 class="page-title">
                 <i class="bi bi-vector-pen"></i> Main Store Manual Stock Entry - @(ViewBag.IsEdit != null && (bool)ViewBag.IsEdit ? "Edit" : "Add")
             </h3>
+            <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary" tabindex="7">
+                <i class="fa fa-arrow-left"></i> Back
+            </a>
         </div>
 
         <div class="form-container">
@@ -194,7 +197,7 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="mtrlid" class="form-label">Material</label>
-                            @Html.DropDownList("mtrlid", (SelectList)ViewBag.Materials, "-- Select Material --", new { @class = "form-control", id = "mtrlid" })
+                            @Html.DropDownList("mtrlid", (SelectList)ViewBag.Materials, "-- Select Material --", new { @class = "form-control", id = "mtrlid", tabindex = "1" })
                             <div id="mtrlid_error" class="field-error">Please select a Material.</div>
                         </div>
                     </div>
@@ -207,17 +210,28 @@
                 </div>
 
                 <div class="row">
-                    <div class="col-md-6">
+                    <div class="col-md-3">
+                        <div class="form-group">
+                            <div id="batchNoContainer">
+                                <label for="batchNoDropdown" class="form-label">Batch No</label>
+                                <select id="batchNoDropdown" class="form-control" style="width:100%;" tabindex="2">
+                                    <option value="">-- Select Batch --</option>
+                                </select>
+                                <div id="batchNoDropdown_error" class="field-error">Please select Batch.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
                         <div class="form-group">
                             <label for="currentBatch" class="form-label">Current Batch</label>
-                            <input type="text" id="currentBatch" name="currentBatch" class="form-control" autocomplete="off" value="@(ViewBag.CurrentBatch ?? string.Empty)" />
+                            <input type="text" id="currentBatch" name="currentBatch" class="form-control" autocomplete="off" value="@(ViewBag.CurrentBatch ?? string.Empty)" tabindex="3" />
                             <div id="currentBatch_error" class="field-error">Please enter Current Batch.</div>
                         </div>
                     </div>
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="phyQty" class="form-label">Physical Quantity</label>
-                            <input type="number" id="phyQty" name="phyQty" class="form-control" step="0.01" autocomplete="off" value="@(ViewBag.PhyQty ?? string.Empty)" />
+                            <input type="number" id="phyQty" name="phyQty" class="form-control" step="0.01" autocomplete="off" value="@(ViewBag.PhyQty ?? string.Empty)" tabindex="4" />
                             <div id="phyQty_error" class="field-error">Please enter Physical Quantity.</div>
                         </div>
                     </div>
@@ -227,10 +241,25 @@
                     <div class="col-md-6">
                         <div class="form-group">
                             <label for="expiryDate" class="form-label">Expiry Date</label>
-                            <input type="date" id="expiryDate" name="expiryDate" class="form-control" value="@(ViewBag.ExpiryDate ?? string.Empty)" />
+                            <input type="date" id="expiryDate" name="expiryDate" class="form-control" value="@(ViewBag.ExpiryDate ?? string.Empty)" tabindex="5" />
                             <div id="expiryDate_error" class="field-error">Please select Expiry Date.</div>
                         </div>
                     </div>
+                    <div class="col-md-3">
+                        <div class="form-group" style="margin-top:30px;">
+                            <button type="submit" class="btn btn-primary" id="btnSave" tabindex="6">
+                                @if (ViewBag.IsEdit != null && (bool)ViewBag.IsEdit)
+                                {
+                                    <i class="fa fa-save"></i><text> Update</text>
+                                }
+                                else
+                                {
+                                    <i class="fa fa-save"></i><text> Save</text>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-3"></div>
                 </div>
 
                 <div class="row">
@@ -251,21 +280,6 @@
                     </div>
                 </div>
 
-                <div class="form-actions-row">
-                    <a href="@Url.Action("Index", "DirectManualEntry")" class="btn btn-secondary">
-                        <i class="fa fa-arrow-left"></i> Back
-                    </a>
-                    <button type="submit" class="btn btn-primary" id="btnSave">
-                        @if (ViewBag.IsEdit != null && (bool)ViewBag.IsEdit)
-                        {
-                            <i class="fa fa-save"></i><text> Update</text>
-                        }
-                        else
-                        {
-                            <i class="fa fa-save"></i><text> Save</text>
-                        }
-                    </button>
-                </div>
             }
         </div>
     </div>
@@ -278,11 +292,13 @@
         $(document).ready(function () {
             var $mtrl = $('#mtrlid');
             var $groupName = $('#materialGroupName');
+            var $batchNo = $('#batchNoDropdown');
             var $currentBatch = $('#currentBatch');
             var $phyQty = $('#phyQty');
             var $expiryDate = $('#expiryDate');
             var isEdit = @((ViewBag.IsEdit != null && (bool)ViewBag.IsEdit) ? "true" : "false");
             var isSubmitting = false;
+            var selectedStkBid = null;
 
             function setError($el, errorId, hasError) {
                 if (hasError) {
@@ -319,12 +335,82 @@
                 return ok;
             }
 
+            function setBatchMode(hasBatches) {
+                try {
+                    $('#batchNoContainer').show();
+                    $('#batchNoDropdown_error').hide();
+                } catch (e) { }
+            }
+
             if ($.fn.select2) {
                 $mtrl.select2({
                     placeholder: '-- Select Material --',
                     allowClear: true,
                     minimumResultsForSearch: 0,
                     width: '100%'
+                });
+            }
+
+            function resetBatchDropdown() {
+                try {
+                    $batchNo.empty();
+                    $batchNo.append('<option value="">-- Select Batch --</option>');
+                } catch (e) { }
+            }
+
+            function loadBatches(mtrlid) {
+                resetBatchDropdown();
+                setBatchMode(false);
+                if (!mtrlid) return;
+
+                $.ajax({
+                    url: '@Url.Action("GetMaterialBatches", "DirectManualEntry")',
+                    type: 'GET',
+                    dataType: 'json',
+                    data: { mtrlid: mtrlid },
+                    success: function (res) {
+                        if (!res || !res.ok) {
+                            try {
+                                Swal.fire('Batch Load Failed', (res && res.message) ? res.message : 'Unable to load batch details.', 'error');
+                            } catch (e) { }
+                            setBatchMode(false);
+                            return;
+                        }
+
+                        var rows = res.data || [];
+                        if (!rows.length) {
+                            setBatchMode(false);
+                            return;
+                        }
+
+                        setBatchMode(true);
+                        for (var i = 0; i < rows.length; i++) {
+                            var r = rows[i];
+                            var b = (r && r.batchNo) ? String(r.batchNo) : '';
+                            var exp = (r && r.expiryDate) ? String(r.expiryDate) : '';
+                            var stk = (r && r.stkBid) ? String(r.stkBid) : '';
+                            var text = b;
+                            if (exp) {
+                                text = b + '  (' + exp + ')';
+                            }
+                            $batchNo.append('<option value="' + stk + '" data-batchno="' + escapeHtml(b) + '" data-expiry="' + escapeHtml(exp) + '">' + escapeHtml(text) + '</option>');
+                        }
+                    },
+                    error: function () {
+                        try {
+                            var msg = 'Error calling GetMaterialBatches.';
+                            if (arguments && arguments.length > 0 && arguments[0]) {
+                                var xhr = arguments[0];
+                                if (xhr.responseJSON && xhr.responseJSON.message) {
+                                    msg = xhr.responseJSON.message;
+                                } else if (xhr.responseText) {
+                                    msg = xhr.responseText;
+                                }
+                            }
+                            Swal.fire('Batch Load Failed', msg, 'error');
+                        } catch (e) { }
+                        $('#batchNoContainer').show();
+                    }
                 });
             }
 
@@ -396,14 +482,14 @@
                 $groupName.val('');
             }
 
-            function loadDetails(mtrlid) {
+            function loadDetails(mtrlid, stkBid) {
                 clearDetails();
                 if (!mtrlid) return;
 
                 $.ajax({
                     url: '@Url.Action("GetMaterialDetails", "DirectManualEntry")',
                     type: 'GET',
-                    data: { mtrlid: mtrlid },
+                    data: { mtrlid: mtrlid, stkBid: stkBid },
                     success: function (res) {
                         if (!res || !res.ok) return;
                         if (res.group && res.group.MTRLGDESC) {
@@ -418,7 +504,41 @@
             }
 
             $mtrl.on('change', function () {
-                loadDetails($(this).val());
+                var m = $(this).val();
+                selectedStkBid = null;
+                loadDetails(m, null);
+                loadBatches(m);
+                validateForm();
+            });
+
+            $(document).on('keydown', '.select2-selection', function (e) {
+                if (e.key === 'Tab' && !e.shiftKey) {
+                    setTimeout(function () { $batchNo.focus(); }, 0);
+                }
+            });
+
+            $batchNo.on('change', function () {
+                var m = $mtrl.val();
+                var stkBid = ($(this).val() || '').trim();
+                if (!stkBid) {
+                    selectedStkBid = null;
+                    loadDetails(m, null);
+                    return;
+                }
+
+                selectedStkBid = parseInt(stkBid, 10);
+                var $opt = $(this).find('option:selected');
+                var bno = $opt.attr('data-batchno') || '';
+                var exp = $opt.attr('data-expiry') || '';
+
+                if (bno) {
+                    $currentBatch.val(bno);
+                }
+                if (exp) {
+                    $expiryDate.val(exp);
+                }
+
+                loadDetails(m, selectedStkBid);
                 validateForm();
             });
 
@@ -471,10 +591,17 @@
 
             var initialMtrl = $mtrl.val();
             if (initialMtrl && parseInt(initialMtrl, 10) > 0) {
-                loadDetails(initialMtrl);
+                loadDetails(initialMtrl, null);
+                loadBatches(initialMtrl);
             } else {
                 clearDetails();
+                resetBatchDropdown();
+                setBatchMode(false);
             }
+
+            try {
+                $('#batchNoContainer').show();
+            } catch (e) { }
         });
     </script>
 }

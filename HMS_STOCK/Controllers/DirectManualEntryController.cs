@@ -76,6 +76,80 @@ namespace HMS_STOCK.Controllers
             public string MTRLGDESC { get; set; }
         }
 
+        private class MaterialBatchDetailItem
+        {
+            public int MTRLID { get; set; }
+            public int STKBID { get; set; }
+            public string BATCHNO { get; set; }
+            public DateTime? STKEDATE { get; set; }
+        }
+
+        [HttpGet]
+        public JsonResult GetMaterialBatches(int mtrlid)
+        {
+            try
+            {
+                var dt = new DataTable();
+                using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
+                using (var cmd = new SqlCommand("pr_Pharmacy_Year_End_Material_Batch_Detail", conn))
+                using (var da = new SqlDataAdapter(cmd))
+                {
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    cmd.Parameters.AddWithValue("@PMTRLID", mtrlid);
+                    conn.Open();
+                    da.Fill(dt);
+                }
+
+                var list = new List<MaterialBatchDetailItem>();
+                foreach (DataRow r in dt.Rows)
+                {
+                    Func<string, bool> hasCol = (name) =>
+                        r.Table != null && r.Table.Columns != null &&
+                        r.Table.Columns.Cast<DataColumn>().Any(c => string.Equals(c.ColumnName, name, StringComparison.OrdinalIgnoreCase));
+
+                    Func<string, object> getCol = (name) =>
+                    {
+                        if (r.Table == null || r.Table.Columns == null) return null;
+                        var col = r.Table.Columns.Cast<DataColumn>().FirstOrDefault(c => string.Equals(c.ColumnName, name, StringComparison.OrdinalIgnoreCase));
+                        return col != null ? r[col] : null;
+                    };
+
+                    object rawMtrlId = hasCol("MTRLID") ? getCol("MTRLID") : null;
+                    object rawStkBid = hasCol("STKBID") ? getCol("STKBID") : null;
+                    object rawBatchNo = hasCol("BATCHNO") ? getCol("BATCHNO") : (hasCol("BATCH") ? getCol("BATCH") : null);
+                    object rawStkEdate = hasCol("STKEDATE") ? getCol("STKEDATE") : (hasCol("EXPIRYDATE") ? getCol("EXPIRYDATE") : (hasCol("EDATE") ? getCol("EDATE") : null));
+
+                    var item = new MaterialBatchDetailItem();
+                    try { item.MTRLID = rawMtrlId == null || rawMtrlId == DBNull.Value ? 0 : Convert.ToInt32(rawMtrlId); } catch { item.MTRLID = 0; }
+                    try { item.STKBID = rawStkBid == null || rawStkBid == DBNull.Value ? 0 : Convert.ToInt32(rawStkBid); } catch { item.STKBID = 0; }
+                    try { item.BATCHNO = rawBatchNo == null || rawBatchNo == DBNull.Value ? null : Convert.ToString(rawBatchNo); } catch { item.BATCHNO = null; }
+                    try { item.STKEDATE = rawStkEdate == null || rawStkEdate == DBNull.Value ? (DateTime?)null : Convert.ToDateTime(rawStkEdate); } catch { item.STKEDATE = null; }
+                    if (item.STKBID > 0 || !string.IsNullOrWhiteSpace(item.BATCHNO))
+                    {
+                        list.Add(item);
+                    }
+                }
+
+                var data = list
+                    .OrderByDescending(x => x.STKEDATE ?? DateTime.MinValue)
+                    .ThenBy(x => x.BATCHNO)
+                    .Select(x => new
+                    {
+                        mtrlid = x.MTRLID,
+                        stkBid = x.STKBID,
+                        batchNo = x.BATCHNO,
+                        expiryDate = x.STKEDATE.HasValue ? x.STKEDATE.Value.ToString("yyyy-MM-dd") : string.Empty
+                    })
+                    .ToList();
+
+                return Json(new { ok = true, data }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { ok = false, message = ex.Message, data = new object[0] }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
         private void LoadMaterialGroups(int? selectedGroupId = null)
         {
             var groups = db.Database.SqlQuery<MaterialGroupDropdownItem>(
@@ -387,11 +461,11 @@ WHERE SID = @p7",
         }
 
         [HttpGet]
-        public JsonResult GetMaterialDetails(int mtrlid)
+        public JsonResult GetMaterialDetails(int mtrlid, int? stkBid = null)
         {
             try
             {
-                var opening = GetTop1RowAsDictionary("Z_OPENING_SUPPLIER_HSN_DETAIL_ASSGN_001", mtrlid);
+                var opening = GetTop1RowAsDictionary("Z_OPENING_SUPPLIER_HSN_DETAIL_ASSGN_001", mtrlid, stkBid);
                 var material = GetTop1RowAsDictionary("Z_VW_MATERIAL_HSN_DETAIL_ASSGN", mtrlid);
 
                 var group = db.Database.SqlQuery<MaterialGroupByMaterialItem>(
@@ -416,17 +490,32 @@ WHERE SID = @p7",
             }
         }
 
-        private Dictionary<string, object> GetTop1RowAsDictionary(string viewName, int mtrlid)
+        private Dictionary<string, object> GetTop1RowAsDictionary(string viewName, int mtrlid, int? stkBid = null)
         {
             var result = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            string sql = "SELECT TOP 1 * FROM " + viewName + " WHERE MTRLID = @mtrlid";
+            string sql;
+            if (stkBid.HasValue && stkBid.Value > 0)
+            {
+                sql = "SELECT TOP 1 * FROM " + viewName + " WHERE STKBID = @stkBid";
+            }
+            else
+            {
+                sql = "SELECT TOP 1 * FROM " + viewName + " WHERE MTRLID = @mtrlid";
+            }
 
             var dt = new DataTable();
             using (var conn = new SqlConnection(db.Database.Connection.ConnectionString))
             using (var cmd = new SqlCommand(sql, conn))
             using (var da = new SqlDataAdapter(cmd))
             {
-                cmd.Parameters.AddWithValue("@mtrlid", mtrlid);
+                if (stkBid.HasValue && stkBid.Value > 0)
+                {
+                    cmd.Parameters.AddWithValue("@stkBid", stkBid.Value);
+                }
+                else
+                {
+                    cmd.Parameters.AddWithValue("@mtrlid", mtrlid);
+                }
                 conn.Open();
                 da.Fill(dt);
             }
