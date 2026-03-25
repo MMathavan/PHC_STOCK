@@ -670,6 +670,163 @@
                     }
                 });
             });
+
+            function focusDataTablesSearch() {
+                try {
+                    var $s = $('#stockTable_filter input[type=search]');
+                    if ($s.length) {
+                        $s.focus();
+                    }
+                } catch (e) { }
+            }
+
+            function getRowIndex($tr) {
+                try {
+                    var row = table.row($tr);
+                    if (!row || !row.node) return -1;
+                    return row.index();
+                } catch (e) { return -1; }
+            }
+
+            function focusRowField(rowIndex, fieldName) {
+                try {
+                    if (rowIndex === null || rowIndex === undefined || rowIndex < 0) return false;
+                    var rowNode = table.row(rowIndex).node();
+                    if (!rowNode) return false;
+
+                    var $row = $(rowNode);
+                    var $el = null;
+                    if (fieldName === 'currentbatch') {
+                        $el = $row.find('.inline-currentbatch');
+                    } else if (fieldName === 'phyqty') {
+                        $el = $row.find('.inline-phyqty');
+                    } else if (fieldName === 'update') {
+                        $el = $row.find('.btn-inline-update');
+                    } else if (fieldName === 'delete') {
+                        $el = $row.find('.btn-inline-delete');
+                    }
+
+                    if ($el && $el.length) {
+                        $el.focus();
+                        return true;
+                    }
+                } catch (e) { }
+                return false;
+            }
+
+            function focusFirstRow() {
+                try {
+                    var rowNode = table.row(0).node();
+                    if (!rowNode) return;
+                    $(rowNode).find('.inline-currentbatch').focus();
+                } catch (e) { }
+            }
+
+            function focusSelect2MaterialGroup() {
+                try {
+                    var $c = $('#materialGroupDropdown').next('.select2-container');
+                    var $sel = $c.find('.select2-selection');
+                    if ($sel.length) {
+                        $sel.focus();
+                    } else {
+                        $('#materialGroupDropdown').focus();
+                    }
+                } catch (e) { }
+            }
+
+            function moveNextFromRow($tr, fromField) {
+                var idx = getRowIndex($tr);
+                if (idx < 0) return;
+
+                if (fromField === 'currentbatch') {
+                    if (focusRowField(idx, 'phyqty')) return;
+                } else if (fromField === 'phyqty') {
+                    if (focusRowField(idx, 'update')) return;
+                } else if (fromField === 'update') {
+                    if (focusRowField(idx, 'delete')) return;
+                } else if (fromField === 'delete') {
+                    if (focusRowField(idx + 1, 'currentbatch')) return;
+                }
+            }
+
+            function moveFromMaterialGroupToSearch() {
+                try {
+                    // Close select2 if open
+                    if ($('#materialGroupDropdown').data('select2')) {
+                        $('#materialGroupDropdown').select2('close');
+                    }
+                } catch (e) { }
+
+                focusDataTablesSearch();
+            }
+
+            $(document).on('keydown', function (e) {
+                try {
+                    var isTab = (e.key === 'Tab');
+                    var isEnter = (e.key === 'Enter');
+                    if (!isTab && !isEnter) return;
+                    if (isTab && e.shiftKey) return;
+
+                    var $t = $(e.target);
+
+                    if ($t.is('#materialGroupDropdown') || $t.closest('.select2-container').length) {
+                        // Let Select2 handle Enter (select highlighted item / open dropdown)
+                        if (isEnter) {
+                            return;
+                        }
+                        if (isTab) {
+                            e.preventDefault();
+                            moveFromMaterialGroupToSearch();
+                            return;
+                        }
+                    }
+
+                    if ($t.closest('#stockTable_filter').length) {
+                        if (isTab || isEnter) {
+                            e.preventDefault();
+                            focusFirstRow();
+                            return;
+                        }
+                    }
+
+                    if ($t.hasClass('inline-currentbatch')) {
+                        if (isTab || isEnter) {
+                            e.preventDefault();
+                            moveNextFromRow($t.closest('tr'), 'currentbatch');
+                            return;
+                        }
+                    }
+
+                    if ($t.hasClass('inline-phyqty')) {
+                        if (isTab || isEnter) {
+                            e.preventDefault();
+                            moveNextFromRow($t.closest('tr'), 'phyqty');
+                            return;
+                        }
+                    }
+
+                    if ($t.hasClass('btn-inline-update')) {
+                        if (isTab) {
+                            e.preventDefault();
+                            moveNextFromRow($t.closest('tr'), 'update');
+                            return;
+                        }
+                    }
+
+                    if ($t.hasClass('btn-inline-delete')) {
+                        if (isTab) {
+                            e.preventDefault();
+                            moveNextFromRow($t.closest('tr'), 'delete');
+                            return;
+                        }
+                    }
+                } catch (ex) { }
+            });
+
+            // Initial focus only (do not steal focus on every draw)
+            try {
+                focusSelect2MaterialGroup();
+            } catch (e) { }
         });
     </script>
 }
