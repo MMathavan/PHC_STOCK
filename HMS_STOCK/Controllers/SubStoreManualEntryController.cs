@@ -139,7 +139,7 @@ namespace HMS_STOCK.Controllers
 
         private static byte[] BuildManualEntryPdf(string title, DateTime printedAt, List<ManualEntryRow> rows)
         {
-            const int rowsPerPage = 37;
+            const int rowsPerPage = 35;
             int totalPages = Math.Max(1, (int)Math.Ceiling(rows.Count / (double)rowsPerPage));
 
             using (var ms = new MemoryStream())
@@ -175,16 +175,16 @@ namespace HMS_STOCK.Controllers
                         document.Add(new Paragraph(" "));
 
                         var table = new PdfPTable(6) { WidthPercentage = 100 };
-                        table.SetWidths(new float[] { 0.7f, 4.2f, 1.6f, 1.3f, 1.9f, 0.8f });
+                        table.SetWidths(new float[] { 0.45f, 1f, 1f, 1f, 1.2f, 0.75f });
                         table.HeaderRows = 1;
 
                         var headerBg = new BaseColor(46, 117, 182);
                         table.AddCell(MakeTableHeaderCell("S.NO", fontHeader, headerBg, noWrap: true, align: Element.ALIGN_CENTER));
-                        table.AddCell(MakeTableHeaderCell("TRANDREFNAME", fontHeader, headerBg));
-                        table.AddCell(MakeTableHeaderCell("BATCHNO", fontHeader, headerBg));
-                        table.AddCell(MakeTableHeaderCell("STKEDATE", fontHeader, headerBg));
-                        table.AddCell(MakeTableHeaderCell("CURRENT BATCH NO", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_CENTER));
-                        table.AddCell(MakeTableHeaderCell("PHY.QTY", fontHeader, headerBg));
+                        table.AddCell(MakeTableHeaderCell("TRANDREFNAME", fontHeader, headerBg, noWrap: false));
+                        table.AddCell(MakeTableHeaderCell("BATCHNO", fontHeader, headerBg, noWrap: false));
+                        table.AddCell(MakeTableHeaderCell("STKEDATE", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_CENTER));
+                        table.AddCell(MakeTableHeaderCell("CURRENT BATCH NO", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_LEFT));
+                        table.AddCell(MakeTableHeaderCell("PHY.QTY", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_LEFT));
 
                         int index = (pageNo - 1) * rowsPerPage;
                         int rowCount = 0;
@@ -195,10 +195,10 @@ namespace HMS_STOCK.Controllers
                             int serialNo = index + 1;
                             table.AddCell(MakeTableCell(serialNo.ToString(), fontCell, Element.ALIGN_CENTER));
                             table.AddCell(MakeTableCell(r.TRANREFNAME, fontCell, Element.ALIGN_LEFT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER));
-                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT));
-                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_RIGHT));
+                            table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT, noWrap: false));
+                            table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER, noWrap: false));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT, noWrap: false));
+                            table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_RIGHT, noWrap: false));
 
                             index++;
                             rowCount++;
@@ -257,7 +257,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 24f,
+                MinimumHeight = 24f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
@@ -272,7 +272,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 16f,
+                MinimumHeight = 16f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
