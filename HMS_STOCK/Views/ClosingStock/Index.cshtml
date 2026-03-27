@@ -617,7 +617,7 @@
                     return;
                 }
 
-                if (!confirm('Are you sure you want to delete the entered CURRENT BATCH and PHYSICAL QTY for this row?')) {
+                if (!confirm('Are you sure you want to delete the entered CURRENT BATCH, PHYSICAL QTY and EXPIRY DATE for this row?')) {
                     return;
                 }
 
@@ -715,6 +715,8 @@
                         $el = $row.find('.inline-currentbatch');
                     } else if (fieldName === 'phyqty') {
                         $el = $row.find('.inline-phyqty');
+                    } else if (fieldName === 'expirydate') {
+                        $el = $row.find('.inline-expirydate');
                     } else if (fieldName === 'update') {
                         $el = $row.find('.btn-inline-update');
                     } else if (fieldName === 'delete') {
@@ -756,6 +758,9 @@
                 if (fromField === 'currentbatch') {
                     if (focusRowField(idx, 'phyqty')) return;
                 } else if (fromField === 'phyqty') {
+                    if (focusRowField(idx, 'expirydate')) return;
+                    if (focusRowField(idx, 'update')) return;
+                } else if (fromField === 'expirydate') {
                     if (focusRowField(idx, 'update')) return;
                 } else if (fromField === 'update') {
                     if (focusRowField(idx, 'delete')) return;
@@ -816,6 +821,14 @@
                         if (isTab || isEnter) {
                             e.preventDefault();
                             moveNextFromRow($t.closest('tr'), 'phyqty');
+                            return;
+                        }
+                    }
+
+                    if ($t.hasClass('inline-expirydate')) {
+                        if (isTab || isEnter) {
+                            e.preventDefault();
+                            moveNextFromRow($t.closest('tr'), 'expirydate');
                             return;
                         }
                     }
