@@ -205,7 +205,8 @@ namespace HMS_STOCK.Controllers
                     item.TRANBIGSTAMT,
                     item.CLVALUE,
                     item.CURRENTBATCH,
-                    item.PHYQTY
+                    item.PHYQTY,
+                    EXPIRYDATE = item.EXPIRYDATE.HasValue ? item.EXPIRYDATE.Value.ToString("yyyy-MM-dd") : ""
                 }).ToList();
 
                 return Json(new
@@ -269,7 +270,7 @@ namespace HMS_STOCK.Controllers
         }
 
         [HttpPost]
-        public JsonResult UpdatePhysical(int stkBid, string currentBatch, decimal? phyQty)
+        public JsonResult UpdatePhysical(int stkBid, string currentBatch, decimal? phyQty, DateTime? expiryDate)
         {
             try
             {
@@ -288,13 +289,15 @@ namespace HMS_STOCK.Controllers
                     @"UPDATE SubStoreStockMaster_2526
                       SET CURRENTBATCH = @p1,
                           PHYQTY = @p2,
-                          CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p3 ELSE CUSRID END,
-                          LMUSRID = @p3,
+                          EXPIRYDATE = @p3,
+                          CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p4 ELSE CUSRID END,
+                          LMUSRID = @p4,
                           PRCSDATE = GETDATE()
                       WHERE STKBID = @p0",
                     stkBid,
                     (object)currentBatch ?? DBNull.Value,
                     (object)phyQty ?? DBNull.Value,
+                    (object)expiryDate ?? DBNull.Value,
                     currentUser);
 
                 return Json(new { ok = true });
@@ -325,6 +328,7 @@ namespace HMS_STOCK.Controllers
                     @"UPDATE SubStoreStockMaster_2526
                       SET CURRENTBATCH = NULL,
                           PHYQTY = 0,
+                          EXPIRYDATE = NULL,
                           CUSRID = CASE WHEN CUSRID IS NULL OR LTRIM(RTRIM(CUSRID)) = '' THEN @p1 ELSE CUSRID END,
                           LMUSRID = @p1,
                           PRCSDATE = GETDATE()

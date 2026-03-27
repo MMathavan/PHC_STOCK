@@ -85,6 +85,8 @@ namespace HMS_STOCK.Models
 
         public decimal? PHYQTY { get; set; }
 
+        public DateTime? EXPIRYDATE { get; set; }
+
         [StringLength(100)]
         public string CUSRID { get; set; }
 

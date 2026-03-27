@@ -461,6 +461,7 @@
                         <th>Closing Value</th>
                         <th>Current Batch</th>
                         <th>Physical Quantity</th>
+                        <th>Physical Expiry Date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -572,6 +573,14 @@
                         }
                     },
                     {
+                        data: 'EXPIRYDATE',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            var v = data ? data : '';
+                            return '<input type="date" class="form-control form-control-sm inline-expirydate" value="' + v + '" data-original="' + v + '" />';
+                        }
+                    },
+                    {
                         data: 'STKBID',
                         orderable: false,
                         searchable: false,
@@ -602,8 +611,9 @@
                 var cbNow = ($tr.find('.inline-currentbatch').val() || '').trim();
                 var pqNowRaw = ($tr.find('.inline-phyqty').val() || '').trim();
                 var pqNow = pqNowRaw;
+                var edNow = ($tr.find('.inline-expirydate').val() || '').trim();
 
-                if (cbNow === '' && pqNow === '') {
+                if (cbNow === '' && pqNow === '' && edNow === '') {
                     return;
                 }
 
@@ -623,6 +633,7 @@
 
                         $tr.find('.inline-currentbatch').attr('data-original', '').val('');
                         $tr.find('.inline-phyqty').attr('data-original', '').val('');
+                        $tr.find('.inline-expirydate').attr('data-original', '').val('');
 
                         table.ajax.reload(null, false);
                     },
@@ -637,17 +648,19 @@
                 var $tr = $(this).closest('tr');
                 var cb = $tr.find('.inline-currentbatch').val();
                 var pq = $tr.find('.inline-phyqty').val();
+                var ed = $tr.find('.inline-expirydate').val();
 
                 var cbNow = (cb || '').trim();
                 var pqNow = (pq || '').toString().trim();
-                if (cbNow === '' && pqNow === '') {
+                var edNow = (ed || '').trim();
+                if (cbNow === '' && pqNow === '' && edNow === '') {
                     return;
                 }
 
                 $.ajax({
                     url: '@Url.Action("UpdatePhysical", "SubStoreClosingStock")',
                     type: 'POST',
-                    data: { stkBid: id, currentBatch: cb, phyQty: pq },
+                    data: { stkBid: id, currentBatch: cb, phyQty: pq, expiryDate: ed },
                     success: function (resp) {
                         if (!resp || !resp.ok) {
                             alert(resp && resp.message ? resp.message : 'Save failed');
@@ -656,10 +669,12 @@
 
                         $tr.find('.inline-currentbatch').attr('data-original', cb || '').val(cb || '');
                         $tr.find('.inline-phyqty').attr('data-original', pq || '').val(pq || '');
+                        $tr.find('.inline-expirydate').attr('data-original', ed || '').val(ed || '');
 
                         var cbShow = (cb || '').trim();
                         var pqShow = (pq || '').toString().trim();
-                        if (cbShow !== '' || pqShow !== '') {
+                        var edShow = (ed || '').trim();
+                        if (cbShow !== '' || pqShow !== '' || edShow !== '') {
                             alert('Saved Successfully');
                         }
 
