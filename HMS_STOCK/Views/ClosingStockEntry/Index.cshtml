@@ -63,6 +63,27 @@
         background: rgba(183, 28, 28, 0.98);
     }
 
+    .btn-download-excel {
+        background: rgba(46, 125, 50, 0.95);
+        color: #fff;
+        border: none;
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-weight: 700;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-download-excel:hover,
+    .btn-download-excel:focus {
+        color: #fff;
+        text-decoration: none;
+        background: rgba(27, 94, 32, 0.98);
+    }
+
     .header-title {
         font-size: 28px;
         font-weight: 600;
@@ -459,10 +480,16 @@
             <h3 class="page-title">
                 <i class="fa fa-stop-circle"></i> Main Store Closing Stock
             </h3>
-            <a id="btnDownloadClosingStockPdf" class="btn-download-pdf" href="@Url.Action("DownloadPdf", "ClosingStockEntry")">
-                <i class="bi bi-download"></i>
-                Download as PDF
-            </a>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a id="btnDownloadClosingStockPdf" class="btn-download-pdf" href="@Url.Action("DownloadPdf", "ClosingStockEntry")">
+                    <i class="bi bi-download"></i>
+                    Download as PDF
+                </a>
+                <a id="btnDownloadClosingStockExcel" class="btn-download-excel" href="@Url.Action("DownloadExcel", "ClosingStockEntry")">
+                    <i class="bi bi-download"></i>
+                    Download as Excel
+                </a>
+            </div>
         </div>
         <div class="table-container">
             @if (TempData["ErrorMessage"] != null)
@@ -690,6 +717,14 @@
                 var mg = selectedMaterialGroup ? selectedMaterialGroup : '';
                 var s = (table && table.search) ? (table.search() || '') : '';
                 var url = '@Url.Action("DownloadPdf", "ClosingStockEntry")' + '?materialGroupId=' + encodeURIComponent(mg) + '&search=' + encodeURIComponent(s);
+                window.location.href = url;
+            });
+
+            $('#btnDownloadClosingStockExcel').on('click', function (e) {
+                e.preventDefault();
+                var mg = selectedMaterialGroup ? selectedMaterialGroup : '';
+                var s = (table && table.search) ? (table.search() || '') : '';
+                var url = '@Url.Action("DownloadExcel", "ClosingStockEntry")' + '?materialGroupId=' + encodeURIComponent(mg) + '&search=' + encodeURIComponent(s);
                 window.location.href = url;
             });
 

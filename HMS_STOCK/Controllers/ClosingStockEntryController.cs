@@ -4,6 +4,7 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
+using ClosedXML.Excel;
 using HMS_STOCK.Models;
 using iTextSharp.text;
 using iTextSharp.text.pdf;
@@ -113,6 +114,138 @@ namespace HMS_STOCK.Controllers
                 var rows = db.Database.SqlQuery<StockMaster_2526>(query, parameters.ToArray()).ToList();
                 var pdfBytes = BuildClosingStockEntryPdf(rows);
                 return File(pdfBytes, "application/pdf", "MAIN_STORE_CLOSING_STOCK_2026-2027.pdf");
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+                return RedirectToAction("Index", new { materialGroupId = materialGroupId });
+            }
+        }
+
+        [HttpGet]
+        public ActionResult DownloadExcel(int? materialGroupId, string search)
+        {
+            try
+            {
+                bool hasMaterialFilter = materialGroupId.HasValue && materialGroupId.Value > 0;
+                bool hasSearch = !string.IsNullOrWhiteSpace(search);
+
+                string where = "WHERE ISNULL(STKBID, 0) <> 0";
+                var parameters = new List<object>();
+
+                if (hasMaterialFilter)
+                {
+                    where += " AND MTRLGID = @p0";
+                    parameters.Add(materialGroupId.Value);
+                }
+
+                if (hasSearch)
+                {
+                    var idx = parameters.Count;
+                    where += " AND (MTRLDESC LIKE @p" + idx + " OR BATCHNO LIKE @p" + idx + " OR CONVERT(varchar(10), STKEDATE, 23) LIKE @p" + idx + ")";
+                    parameters.Add("%" + search.Trim() + "%");
+                }
+
+                var query = @"SELECT
+                        SID,
+                        STKBID,
+                        TRANREFID,
+                        TRANREFNAME,
+                        TRANDREFGID,
+                        MTRLGID,
+                        TRANDREFID2 AS TRANDREFID,
+                        MTRLGDESC,
+                        MTRLDESC,
+                        DACHEADID,
+                        PACKMID,
+                        BATCHNO,
+                        STKEDATE,
+                        MTRLSTKQTY,
+                        STKPRATE,
+                        STKMRP,
+                        ASTKSRATE,
+                        HSNID,
+                        TRANBCGSTEXPRN,
+                        TRANBSGSTEXPRN,
+                        TRANBIGSTEXPRN,
+                        TRANBCGSTAMT,
+                        TRANBSGSTAMT,
+                        TRANBIGSTAMT,
+                        CLVALUE,
+                        CURRENTBATCH,
+                        PHYQTY,
+                        CUSRID,
+                        LMUSRID,
+                        PRCSDATE
+                    FROM StockMaster_2526 " + where + @"
+                    ORDER BY MTRLGDESC, MTRLDESC, BATCHNO, STKEDATE";
+
+                var rows = db.Database.SqlQuery<StockMaster_2526>(query, parameters.ToArray()).ToList();
+
+                using (var wb = new XLWorkbook())
+                {
+                    var ws = wb.Worksheets.Add("ClosingStock");
+
+                    var headers = new string[]
+                    {
+                        "STKBID","TRANREFID","TRANREFNAME","TRANDREFGID","MTRLGID","TRANDREFID",
+                        "MTRLGDESC","MTRLDESC","DACHEADID","PACKMID","BATCHNO","STKEDATE",
+                        "MTRLSTKQTY","STKPRATE","STKMRP","ASTKSRATE","HSNID","TRANBCGSTEXPRN",
+                        "TRANBSGSTEXPRN","TRANBIGSTEXPRN","TRANBCGSTAMT","TRANBSGSTAMT","TRANBIGSTAMT","CLVALUE"
+                    };
+
+                    for (int i = 0; i < headers.Length; i++)
+                    {
+                        ws.Cell(1, i + 1).Value = headers[i];
+                        ws.Cell(1, i + 1).Style.Font.Bold = true;
+                    }
+
+                    int rowIdx = 2;
+                    if (rows != null)
+                    {
+                        foreach (var r in rows)
+                        {
+                            int col = 1;
+                            ws.Cell(rowIdx, col++).Value = r.STKBID;
+                            ws.Cell(rowIdx, col++).Value = r.TRANREFID;
+                            ws.Cell(rowIdx, col++).Value = r.TRANREFNAME;
+                            ws.Cell(rowIdx, col++).Value = r.TRANDREFGID;
+                            ws.Cell(rowIdx, col++).Value = r.MTRLGID;
+                            ws.Cell(rowIdx, col++).Value = r.TRANDREFID;
+                            ws.Cell(rowIdx, col++).Value = r.MTRLGDESC;
+                            ws.Cell(rowIdx, col++).Value = r.MTRLDESC;
+                            ws.Cell(rowIdx, col++).Value = r.DACHEADID;
+                            ws.Cell(rowIdx, col++).Value = r.PACKMID;
+                            ws.Cell(rowIdx, col++).Value = r.BATCHNO;
+                            ws.Cell(rowIdx, col++).Value = r.STKEDATE;
+                            ws.Cell(rowIdx, col++).Value = r.MTRLSTKQTY;
+                            ws.Cell(rowIdx, col++).Value = r.STKPRATE;
+                            ws.Cell(rowIdx, col++).Value = r.STKMRP;
+                            ws.Cell(rowIdx, col++).Value = r.ASTKSRATE;
+                            ws.Cell(rowIdx, col++).Value = r.HSNID;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBCGSTEXPRN;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBSGSTEXPRN;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBIGSTEXPRN;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBCGSTAMT;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBSGSTAMT;
+                            ws.Cell(rowIdx, col++).Value = r.TRANBIGSTAMT;
+                            ws.Cell(rowIdx, col++).Value = r.CLVALUE;
+                            rowIdx++;
+                        }
+                    }
+
+                    ws.SheetView.FreezeRows(1);
+                    ws.Columns().AdjustToContents();
+
+                    using (var ms = new MemoryStream())
+                    {
+                        wb.SaveAs(ms);
+                        var bytes = ms.ToArray();
+                        return File(bytes,
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            "MAIN_STORE_CLOSING_STOCK_2026-2027.xlsx");
+                    }
+                }
             }
             catch (Exception ex)
             {
