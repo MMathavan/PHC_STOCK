@@ -139,7 +139,7 @@ namespace HMS_STOCK.Controllers
 
         private static byte[] BuildManualEntryPdf(string title, DateTime printedAt, List<ManualEntryRow> rows)
         {
-            const int rowsPerPage = 35;
+            const int rowsPerPage = 34;
             int totalPages = Math.Max(1, (int)Math.Ceiling(rows.Count / (double)rowsPerPage));
 
             using (var ms = new MemoryStream())
@@ -153,9 +153,9 @@ namespace HMS_STOCK.Controllers
                     document.Open();
 
                     var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
-                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
-                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
-                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
+                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
+                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
 
                     for (int pageNo = 1; pageNo <= totalPages; pageNo++)
                     {
@@ -257,7 +257,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 27f,
+                FixedHeight = 28f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
@@ -272,7 +272,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 19f,
+                FixedHeight = 20f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
