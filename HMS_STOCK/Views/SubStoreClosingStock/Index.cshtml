@@ -635,7 +635,10 @@
                         $tr.find('.inline-phyqty').attr('data-original', '').val('');
                         $tr.find('.inline-expirydate').attr('data-original', '').val('');
 
-                        table.ajax.reload(null, false);
+                        var _scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                        table.ajax.reload(function () {
+                            window.scrollTo(0, _scrollY);
+                        }, false);
                     },
                     error: function () {
                         alert('Delete failed');
@@ -678,7 +681,10 @@
                             alert('Saved Successfully');
                         }
 
-                        table.ajax.reload(null, false);
+                        var _scrollY = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                        table.ajax.reload(function () {
+                            window.scrollTo(0, _scrollY);
+                        }, false);
                     },
                     error: function () {
                         alert('Save failed');
