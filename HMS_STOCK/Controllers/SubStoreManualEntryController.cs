@@ -153,9 +153,9 @@ namespace HMS_STOCK.Controllers
                     document.Open();
 
                     var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
-                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
-                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 8, BaseColor.WHITE);
-                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
+                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 9, BaseColor.WHITE);
+                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 9, BaseColor.BLACK);
 
                     for (int pageNo = 1; pageNo <= totalPages; pageNo++)
                     {
@@ -257,7 +257,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 24f,
+                FixedHeight = 27f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
@@ -272,7 +272,7 @@ namespace HMS_STOCK.Controllers
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 16f,
+                FixedHeight = 19f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
