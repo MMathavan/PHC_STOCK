@@ -70,25 +70,40 @@ namespace HMS_STOCK.Controllers
                 }
             }
 
+            const string viewName = "VW_NEW_DRUG_SUBSTORE_PHY_QTY_ASSGN_2627";
+            var schema = ExecuteToDataTable("SELECT TOP 0 * FROM " + viewName, null);
+
+            string groupIdColumn = FindColumnName(schema, "MTRLGID", "MTRLG_ID", "MATERIALGROUPID", "MATERIALGROUP_ID", "MATGROUPID");
+            string groupDescColumn = FindColumnName(schema, "MTRLGDESC", "MTRLG_DESC", "MATERIALGROUP", "MATERIALGROUPDESC", "GROUPNAME");
+            string materialDescColumn = FindColumnName(schema, "MTRLDESC", "MTRLDESCRIPTION", "MATERIALDESC", "DRUGNAME", "ITEMNAME");
+
             var sql = @"SELECT *
-FROM VW_NEW_DRUG_SUBSTORE_STOCK_2627
+FROM " + viewName + @"
 WHERE 1 = 1";
 
             var sqlParams = new List<SqlParameter>();
 
             if (materialGroupId.HasValue && materialGroupId.Value > 0)
             {
-                sql += " AND MTRLGID = @MTRLGID";
-                sqlParams.Add(new SqlParameter("@MTRLGID", materialGroupId.Value));
-
-                if (isTabletsGroup && alphaFrom != null && alphaTo != null)
+                if (!string.IsNullOrWhiteSpace(groupIdColumn))
                 {
-                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) >= @AlphaFrom";
-                    sqlParams.Add(new SqlParameter("@AlphaFrom", alphaFrom));
-
-                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) <= @AlphaTo";
-                    sqlParams.Add(new SqlParameter("@AlphaTo", alphaTo));
+                    sql += " AND " + groupIdColumn + " = @MTRLGID";
+                    sqlParams.Add(new SqlParameter("@MTRLGID", materialGroupId.Value));
                 }
+                else if (!string.IsNullOrWhiteSpace(groupDescColumn) && !string.IsNullOrWhiteSpace(materialGroupName))
+                {
+                    sql += " AND " + groupDescColumn + " = @MTRLGDESC";
+                    sqlParams.Add(new SqlParameter("@MTRLGDESC", materialGroupName.Trim()));
+                }
+            }
+
+            if (isTabletsGroup && alphaFrom != null && alphaTo != null && !string.IsNullOrWhiteSpace(materialDescColumn))
+            {
+                sql += " AND UPPER(LEFT(ISNULL(" + materialDescColumn + ", ''), 1)) >= @AlphaFrom";
+                sqlParams.Add(new SqlParameter("@AlphaFrom", alphaFrom));
+
+                sql += " AND UPPER(LEFT(ISNULL(" + materialDescColumn + ", ''), 1)) <= @AlphaTo";
+                sqlParams.Add(new SqlParameter("@AlphaTo", alphaTo));
             }
 
             var data = ExecuteToDataTable(sql, sqlParams);
@@ -314,6 +329,25 @@ WHERE 1 = 1";
             }
 
             return cols;
+        }
+
+        private static string FindColumnName(DataTable dt, params string[] candidates)
+        {
+            if (dt == null || dt.Columns == null || candidates == null) return null;
+
+            foreach (var cand in candidates)
+            {
+                if (string.IsNullOrWhiteSpace(cand)) continue;
+                foreach (DataColumn c in dt.Columns)
+                {
+                    if (string.Equals((c.ColumnName ?? string.Empty).Trim(), cand.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        return c.ColumnName;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private static string FormatCellValue(object value)
