@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Web.Mvc;
@@ -68,37 +70,28 @@ namespace HMS_STOCK.Controllers
                 }
             }
 
-            var sql = @"SELECT
-    ISNULL(MTRLGDESC, '') AS MTRLGDESC,
-    ISNULL(MTRLDESC, '') AS MTRLDESC,
-    ISNULL(BATCHNO, '') AS BATCHNO,
-    STKEDATE,
-    ISNULL(CURRENTBATCH, '') AS CURRENTBATCH,
-    PHYQTY,
-    EXPIRYDATE
-FROM StockMaster_2526
-WHERE ISNULL(STKBID, 0) <> 0
-  AND (PHYQTY IS NOT NULL AND PHYQTY > 0)";
+            var sql = @"SELECT *
+FROM VW_NEW_DRUG_STOCK_2627
+WHERE 1 = 1";
 
-            var parms = new List<object>();
+            var sqlParams = new List<SqlParameter>();
 
             if (materialGroupId.HasValue && materialGroupId.Value > 0)
             {
-                sql += " AND MTRLGID = @p" + parms.Count;
-                parms.Add(materialGroupId.Value);
+                sql += " AND MTRLGID = @MTRLGID";
+                sqlParams.Add(new SqlParameter("@MTRLGID", materialGroupId.Value));
 
                 if (isTabletsGroup && alphaFrom != null && alphaTo != null)
                 {
-                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) >= @p" + parms.Count;
-                    parms.Add(alphaFrom);
-                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) <= @p" + parms.Count;
-                    parms.Add(alphaTo);
+                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) >= @AlphaFrom";
+                    sqlParams.Add(new SqlParameter("@AlphaFrom", alphaFrom));
+
+                    sql += " AND UPPER(LEFT(ISNULL(MTRLDESC, ''), 1)) <= @AlphaTo";
+                    sqlParams.Add(new SqlParameter("@AlphaTo", alphaTo));
                 }
             }
 
-            sql += " ORDER BY ISNULL(MTRLGDESC, ''), ISNULL(MTRLDESC, ''), ISNULL(BATCHNO, ''), STKEDATE";
-
-            var rows = db.Database.SqlQuery<PhysicalQtyCrossCheckRow>(sql, parms.ToArray()).ToList();
+            var data = ExecuteToDataTable(sql, sqlParams);
 
             string title = "MAIN STORE PHYSICAL QTY CROSS CHECK";
             if (!string.IsNullOrWhiteSpace(materialGroupName))
@@ -110,30 +103,31 @@ WHERE ISNULL(STKBID, 0) <> 0
                 }
             }
 
-            var pdfBytes = BuildPdf(title, DateTime.Now, rows);
+            var pdfBytes = BuildPdf(title, DateTime.Now, data);
             string safeFileName = MakeSafeFileName(title) + ".pdf";
             return File(pdfBytes, "application/pdf", safeFileName);
         }
 
-        private static byte[] BuildPdf(string title, DateTime printedAt, List<PhysicalQtyCrossCheckRow> rows)
+        private static byte[] BuildPdf(string title, DateTime printedAt, DataTable data)
         {
-            const int rowsPerPage = 34;
-            int totalPages = Math.Max(1, (int)Math.Ceiling(rows.Count / (double)rowsPerPage));
+            const int rowsPerPage = 22;
+            int rowCountTotal = data != null ? data.Rows.Count : 0;
+            int totalPages = Math.Max(1, (int)Math.Ceiling(rowCountTotal / (double)rowsPerPage));
 
             using (var ms = new MemoryStream())
             {
                 var pageSize = PageSize.A4;
-                using (var document = new Document(pageSize, 36f, 36f, 40f, 45f))
+                using (var document = new Document(pageSize.Rotate(), 18f, 18f, 30f, 38f))
                 {
                     var writer = PdfWriter.GetInstance(document, ms);
                     writer.PageEvent = new PdfPageEvent(totalPages);
 
                     document.Open();
 
-                    var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.BLACK);
-                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
-                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.WHITE);
-                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 10, BaseColor.BLACK);
+                    var fontTitle = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 10, BaseColor.BLACK);
+                    var fontDate = FontFactory.GetFont(FontFactory.HELVETICA, 8, BaseColor.BLACK);
+                    var fontHeader = FontFactory.GetFont(FontFactory.HELVETICA_BOLD, 7, BaseColor.WHITE);
+                    var fontCell = FontFactory.GetFont(FontFactory.HELVETICA, 7, BaseColor.BLACK);
 
                     for (int pageNo = 1; pageNo <= totalPages; pageNo++)
                     {
@@ -152,43 +146,44 @@ WHERE ISNULL(STKBID, 0) <> 0
 
                         document.Add(new Paragraph(" "));
 
-                        var table = new PdfPTable(8) { WidthPercentage = 100 };
-                        table.SetWidths(new float[] { 0.45f, 1f, 1.7f, 1.0f, 0.9f, 0.9f, 0.7f, 0.9f });
+                        var columns = GetPrintableColumns(data);
+                        int colCount = columns.Count;
+
+                        var table = new PdfPTable(colCount + 1) { WidthPercentage = 100 };
+
+                        var widths = new float[colCount + 1];
+                        widths[0] = 0.55f;
+                        for (int i = 1; i < widths.Length; i++) widths[i] = 1f;
+                        table.SetWidths(widths);
                         table.HeaderRows = 1;
 
                         var headerBg = new BaseColor(46, 117, 182);
                         table.AddCell(MakeTableHeaderCell("S.NO", fontHeader, headerBg, noWrap: true, align: Element.ALIGN_CENTER));
-                        table.AddCell(MakeTableHeaderCell("MTRLGDESC", fontHeader, headerBg, noWrap: false));
-                        table.AddCell(MakeTableHeaderCell("MTRLDESC", fontHeader, headerBg, noWrap: false));
-                        table.AddCell(MakeTableHeaderCell("BATCHNO", fontHeader, headerBg, noWrap: false));
-                        table.AddCell(MakeTableHeaderCell("STKEDATE", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_CENTER));
-                        table.AddCell(MakeTableHeaderCell("CURRENTBATCH", fontHeader, headerBg, noWrap: false));
-                        table.AddCell(MakeTableHeaderCell("PHY.QTY", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_RIGHT));
-                        table.AddCell(MakeTableHeaderCell("EXPIRYDATE", fontHeader, headerBg, noWrap: false, align: Element.ALIGN_CENTER));
+                        foreach (var c in columns)
+                        {
+                            table.AddCell(MakeTableHeaderCell(c.ColumnName, fontHeader, headerBg, noWrap: false));
+                        }
 
                         int index = (pageNo - 1) * rowsPerPage;
                         int rowCount = 0;
-                        while (rowCount < rowsPerPage && index < rows.Count)
+                        while (rowCount < rowsPerPage && index < rowCountTotal)
                         {
-                            var r = rows[index];
-
                             int serialNo = index + 1;
                             table.AddCell(MakeTableCell(serialNo.ToString(), fontCell, Element.ALIGN_CENTER));
-                            table.AddCell(MakeTableCell(r.MTRLGDESC, fontCell, Element.ALIGN_LEFT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.MTRLDESC, fontCell, Element.ALIGN_LEFT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.BATCHNO, fontCell, Element.ALIGN_LEFT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.STKEDATE.HasValue ? r.STKEDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER, noWrap: false));
-                            table.AddCell(MakeTableCell(r.CURRENTBATCH, fontCell, Element.ALIGN_LEFT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.PHYQTY.HasValue ? r.PHYQTY.Value.ToString("0.##") : "", fontCell, Element.ALIGN_RIGHT, noWrap: false));
-                            table.AddCell(MakeTableCell(r.EXPIRYDATE.HasValue ? r.EXPIRYDATE.Value.ToString("dd-MMM-yy") : "", fontCell, Element.ALIGN_CENTER, noWrap: false));
+
+                            var row = data.Rows[index];
+                            foreach (var c in columns)
+                            {
+                                table.AddCell(MakeTableCell(FormatCellValue(row[c]), fontCell, Element.ALIGN_LEFT, noWrap: false));
+                            }
 
                             index++;
                             rowCount++;
                         }
 
-                        if (rows.Count == 0)
+                        if (rowCountTotal == 0)
                         {
-                            for (int i = 0; i < 8; i++)
+                            for (int i = 0; i < colCount + 1; i++)
                             {
                                 table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT, noWrap: false));
                             }
@@ -200,7 +195,7 @@ WHERE ISNULL(STKBID, 0) <> 0
                         {
                             for (int i = rowCount; i < rowsPerPage; i++)
                             {
-                                for (int c = 0; c < 8; c++)
+                                for (int c = 0; c < colCount + 1; c++)
                                 {
                                     table.AddCell(MakeTableCell(string.Empty, fontCell, Element.ALIGN_LEFT, noWrap: false));
                                 }
@@ -227,7 +222,7 @@ WHERE ISNULL(STKBID, 0) <> 0
             };
         }
 
-        private static PdfPCell MakeTableHeaderCell(string text, Font font, BaseColor bg, bool noWrap = true, int align = Element.ALIGN_LEFT)
+        private static PdfPCell MakeTableHeaderCell(string text, Font font, BaseColor bg, bool noWrap = false, int align = Element.ALIGN_LEFT)
         {
             return new PdfPCell(new Phrase(text ?? string.Empty, font))
             {
@@ -235,7 +230,6 @@ WHERE ISNULL(STKBID, 0) <> 0
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 28f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
@@ -243,14 +237,13 @@ WHERE ISNULL(STKBID, 0) <> 0
             };
         }
 
-        private static PdfPCell MakeTableCell(string text, Font font, int align, bool noWrap = true)
+        private static PdfPCell MakeTableCell(string text, Font font, int align, bool noWrap = false)
         {
             return new PdfPCell(new Phrase(text ?? string.Empty, font))
             {
                 HorizontalAlignment = align,
                 VerticalAlignment = Element.ALIGN_MIDDLE,
                 NoWrap = noWrap,
-                FixedHeight = 20f,
                 PaddingTop = 4f,
                 PaddingBottom = 4f,
                 PaddingLeft = 4f,
@@ -278,15 +271,59 @@ WHERE ISNULL(STKBID, 0) <> 0
             base.Dispose(disposing);
         }
 
-        private class PhysicalQtyCrossCheckRow
+        private DataTable ExecuteToDataTable(string sql, List<SqlParameter> parameters)
         {
-            public string MTRLGDESC { get; set; }
-            public string MTRLDESC { get; set; }
-            public string BATCHNO { get; set; }
-            public DateTime? STKEDATE { get; set; }
-            public string CURRENTBATCH { get; set; }
-            public decimal? PHYQTY { get; set; }
-            public DateTime? EXPIRYDATE { get; set; }
+            var dt = new DataTable();
+
+            var conn = db.Database.Connection;
+            if (conn.State != ConnectionState.Open)
+            {
+                conn.Open();
+            }
+
+            using (var cmd = conn.CreateCommand())
+            {
+                cmd.CommandText = sql;
+                cmd.CommandType = CommandType.Text;
+                if (parameters != null)
+                {
+                    foreach (var p in parameters) cmd.Parameters.Add(p);
+                }
+
+                using (var reader = cmd.ExecuteReader())
+                {
+                    dt.Load(reader);
+                }
+            }
+
+            return dt;
+        }
+
+        private static List<DataColumn> GetPrintableColumns(DataTable dt)
+        {
+            var cols = new List<DataColumn>();
+            if (dt == null) return cols;
+
+            foreach (DataColumn c in dt.Columns)
+            {
+                var name = (c.ColumnName ?? string.Empty).Trim();
+                if (name.Equals("CUSRID", StringComparison.OrdinalIgnoreCase)) continue;
+                if (name.Equals("LMUSRID", StringComparison.OrdinalIgnoreCase)) continue;
+                if (name.Equals("PRCSDATE", StringComparison.OrdinalIgnoreCase)) continue;
+                cols.Add(c);
+            }
+
+            return cols;
+        }
+
+        private static string FormatCellValue(object value)
+        {
+            if (value == null || value == DBNull.Value) return string.Empty;
+
+            if (value is DateTime dt) return dt.ToString("dd-MMM-yy");
+            if (value is DateTimeOffset dto) return dto.DateTime.ToString("dd-MMM-yy");
+
+            return Convert.ToString(value);
         }
 
         private class PdfPageEvent : PdfPageEventHelper
