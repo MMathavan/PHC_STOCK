@@ -339,6 +339,8 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SessionExpire.cs" />
     <Compile Include="Startup.cs" />
+    <Compile Include="Controllers\MainStorePhysicalQtyCrossCheckController.cs" />
+    <Compile Include="Controllers\SubStorePhysicalQtyCrossCheckController.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Content\Ajaxdata\ApprovalHead.txt" />
@@ -1252,6 +1254,7 @@
     <Content Include="Views\Estimate\Form.cshtml" />
     <Content Include="Views\ClosingStock\Index.cshtml" />
     <Content Include="Views\ClosingStockEntry\Index.cshtml" />
+    <Content Include="Views\MainStorePhysicalQtyCrossCheck\Index.cshtml" />
     <Content Include="Views\ManualEntry\Index.cshtml" />
     <Content Include="Views\DirectManualEntry\Index.cshtml" />
     <Content Include="Views\DirectManualEntry\Add.cshtml" />
